@@ -1,2 +1,2 @@
-# RecipeVault
-Proyecto de la asignatura de Seguridad en la Nube
+# RecipeVault 
+Proyecto de la asignatura de Seguridad en la Nube. Proyecto basado en un recetario de cocina en el cual se podrá compartir con otros usuarios,es decir una aplicación que te ayude a la hora de cocinar, en la que puedas guardar recetas que tú quieras y las puedas compartir con otros usuarios, también puede ser de utilidad para cuando vayas a hacer la compra te diga que ingredientes necesitas según lo que quieras cocinar
