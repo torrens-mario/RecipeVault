@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Huevos",
+    "quantity": 12.0,
+    "unit": "uds",
+    "low_stock_threshold": 5.0,
+    "low_stock_unit": "uds"
+  },
+  {
+    "id": 2,
+    "name": "Patata",
+    "quantity": 10,
+    "unit": "uds",
+    "low_stock_threshold": 5,
+    "low_stock_unit": "uds"
+  },
+  {
+    "id": 3,
+    "name": "Sal",
+    "quantity": 0.0,
+    "unit": "g",
+    "low_stock_threshold": 5.0,
+    "low_stock_unit": "g"
+  },
+  {
+    "id": 4,
+    "name": "Pasta",
+    "quantity": 200.0,
+    "unit": "g",
+    "low_stock_threshold": 300.0,
+    "low_stock_unit": "g"
+  },
+  {
+    "id": 5,
+    "name": "Pesto",
+    "quantity": 143.0,
+    "unit": "g",
+    "low_stock_threshold": 5,
+    "low_stock_unit": "g"
+  }
+]
