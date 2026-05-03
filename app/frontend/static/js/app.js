@@ -1,10 +1,68 @@
 const grid = document.getElementById('recipes');
 const search = document.getElementById('search');
 const sortSelect = document.getElementById('sortSelect');
-function sortRecipes(items){ const mode = sortSelect?.value || 'alphabetical'; const sorted = [...items]; if(mode==='alphabetical') sorted.sort((a,b)=>a.title.localeCompare(b.title,'es')); if(mode==='favorites') sorted.sort((a,b)=>Number(b.favorite)-Number(a.favorite)||a.title.localeCompare(b.title,'es')); if(mode==='ingredients') sorted.sort((a,b)=>(b.ingredients?.length||0)-(a.ingredients?.length||0)); if(mode==='planned') sorted.sort((a,b)=>Number(b.planned_to_cook)-Number(a.planned_to_cook)||a.title.localeCompare(b.title,'es')); return sorted; }
-function renderRecipes(items){ if(!grid) return; const sorted = sortRecipes(items); if(!sorted.length){ grid.innerHTML='<p class="muted">Todavía no tienes recetas.</p>'; return; } grid.innerHTML = sorted.map(r => `<article class="card recipe-card"><img class="recipe-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800"><div class="recipe-card-body"><div class="recipe-card-head"><h3>${r.title}</h3><button class="favorite-btn ${r.favorite ? 'active' : ''}" data-favorite="${r.id}" aria-label="Marcar como favorita">❤</button></div><p class="muted">${r.category} · ${r.servings} raciones · ${r.ingredients?.length || 0} ingredientes</p><p>${r.description || ''}</p><div class="card-tags">${(r.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}${r.planned_to_cook ? '<span class="tag tag-plan">Quiero cocinarla</span>' : ''}</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><a class="btn secondary" href="/recipes/${r.id}">Ver detalle</a><button class="btn ${r.planned_to_cook ? 'secondary' : 'primary'}" data-plan="${r.id}">${r.planned_to_cook ? 'Quitar de plan' : 'Quiero cocinarla'}</button></div></div></article>`).join(''); }
-async function loadRecipes(){ if(!grid) return; const q = search?.value.trim() || ''; const items = await api.listRecipes(q); window.__recipes = items; renderRecipes(items); }
-search?.addEventListener('input', ()=>{ clearTimeout(window.__searchTimer); window.__searchTimer=setTimeout(loadRecipes,200); });
-sortSelect?.addEventListener('change', ()=>renderRecipes(window.__recipes || []));
-grid?.addEventListener('click', async (e) => { const fav=e.target.closest('[data-favorite]'); const plan=e.target.closest('[data-plan]'); if(fav){ await api.toggleFavorite(Number(fav.dataset.favorite)); await loadRecipes(); } if(plan){ await api.togglePlan(Number(plan.dataset.plan)); await loadRecipes(); } });
+
+function sortRecipes(items) {
+  const mode = sortSelect?.value || 'alphabetical';
+  const sorted = [...items];
+  if (mode === 'alphabetical') sorted.sort((a, b) => a.title.localeCompare(b.title, 'es'));
+  if (mode === 'favorites') sorted.sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.title.localeCompare(b.title, 'es'));
+  if (mode === 'ingredients') sorted.sort((a, b) => (b.ingredients?.length || 0) - (a.ingredients?.length || 0));
+  if (mode === 'planned') sorted.sort((a, b) => Number(b.planned_to_cook) - Number(a.planned_to_cook) || a.title.localeCompare(b.title, 'es'));
+  return sorted;
+}
+
+function renderRecipes(items) {
+  if (!grid) return;
+  const sorted = sortRecipes(items);
+  if (!sorted.length) {
+    grid.innerHTML = '<p class="muted">Todavía no tienes recetas.</p>';
+    return;
+  }
+  grid.innerHTML = sorted.map(r => `
+    <article class="card recipe-card">
+      <img class="recipe-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
+      <div class="recipe-card-body">
+        <div class="recipe-card-head">
+          <h3>${r.title}</h3>
+          <button class="favorite-btn ${r.favorite ? 'active' : ''}" data-favorite="${r.id}" aria-label="Marcar como favorita">❤</button>
+        </div>
+        <p class="muted">${r.category} · ${r.servings} raciones · ${r.ingredients?.length || 0} ingredientes</p>
+        <p>${r.description || ''}</p>
+        <div class="card-tags">
+          ${(r.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+          ${r.planned_to_cook ? '<span class="tag tag-plan">Quiero cocinarla</span>' : ''}
+        </div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <a class="btn secondary" href="/recipes/${r.id}">Ver detalle</a>
+          <button class="btn ${r.planned_to_cook ? 'secondary' : 'primary'}" data-plan="${r.id}">
+            ${r.planned_to_cook ? 'Quitar de plan' : 'Quiero cocinarla'}
+          </button>
+        </div>
+      </div>
+    </article>`).join('');
+}
+
+async function loadRecipes() {
+  if (!grid) return;
+  const q = search?.value.trim() || '';
+  const items = await api.listRecipes(q);
+  window.__recipes = items;
+  renderRecipes(items);
+}
+
+search?.addEventListener('input', () => {
+  clearTimeout(window.__searchTimer);
+  window.__searchTimer = setTimeout(loadRecipes, 200);
+});
+
+sortSelect?.addEventListener('change', () => renderRecipes(window.__recipes || []));
+
+grid?.addEventListener('click', async (e) => {
+  const fav = e.target.closest('[data-favorite]');
+  const plan = e.target.closest('[data-plan]');
+  if (fav) { await api.toggleFavorite(Number(fav.dataset.favorite)); await loadRecipes(); }
+  if (plan) { await api.togglePlan(Number(plan.dataset.plan)); await loadRecipes(); }
+});
+
 loadRecipes();

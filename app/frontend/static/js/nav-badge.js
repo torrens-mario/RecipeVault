@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   try {
     if (typeof api === 'undefined' || !api.shoppingList) return;
     const data = await api.shoppingList();
