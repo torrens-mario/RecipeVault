@@ -1,9 +1,11 @@
 from pydantic import BaseModel, Field
 from typing import List
 
+
 class Ingredient(BaseModel):
     name: str
     amount: str
+
 
 class RecipeBase(BaseModel):
     title: str
@@ -17,11 +19,14 @@ class RecipeBase(BaseModel):
     image: str = ""
     planned_to_cook: bool = False
 
+
 class RecipeCreate(RecipeBase):
     pass
 
+
 class RecipeUpdate(RecipeBase):
     pass
+
 
 class Recipe(RecipeBase):
     id: int

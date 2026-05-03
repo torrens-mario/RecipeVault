@@ -12,7 +12,8 @@
     <nav class="nav-links">
       <a href="/">🍽 <span>Mis recetas</span></a>
       <a href="/inventory" class="active">🥫 <span>Inventario</span></a>
-      <a href="/shopping-list">🛒 <span>Lista de la compra</span><span id="shoppingBadge" class="nav-badge" style="display:none">0</span></a><a href="/recipes/new">＋ <span>Nueva receta</span></a>
+      <a href="/shopping-list">🛒 <span>Lista de la compra</span><span id="shoppingBadge" class="nav-badge" style="display:none">0</span></a>
+      <a href="/recipes/new">＋ <span>Nueva receta</span></a>
     </nav>
   </header>
   <main class="container">
@@ -24,19 +25,42 @@
       <form id="inventoryForm" class="inventory-form">
         <input name="name" placeholder="Ingrediente" required>
         <input name="quantity" type="number" step="0.1" min="0" placeholder="Cantidad" required>
-        <select name="unit" required><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="l">l</option><option value="cda">cda</option><option value="cdita">cdita</option><option value="uds">uds</option></select>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;"><select name="low_stock_threshold" required><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5" selected>5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select><select name="low_stock_unit" required><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="l">l</option><option value="cda">cda</option><option value="cdita">cdita</option><option value="uds">uds</option></select></div>
+        <select name="unit" required>
+          <option value="g">g</option><option value="kg">kg</option>
+          <option value="ml">ml</option><option value="l">l</option>
+          <option value="cda">cda</option><option value="cdita">cdita</option>
+          <option value="uds">uds</option>
+        </select>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <select name="low_stock_threshold" required>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="5" selected>5</option><option value="10">10</option>
+            <option value="15">15</option><option value="20">20</option>
+            <option value="25">25</option><option value="50">50</option><option value="100">100</option>
+          </select>
+          <select name="low_stock_unit" required>
+            <option value="g">g</option><option value="kg">kg</option>
+            <option value="ml">ml</option><option value="l">l</option>
+            <option value="cda">cda</option><option value="cdita">cdita</option>
+            <option value="uds">uds</option>
+          </select>
+        </div>
         <button type="submit" class="btn primary">+ Añadir</button>
       </form>
     </section>
     <section>
       <table class="inventory-table">
-        <thead><tr><th>Ingrediente</th><th>Cantidad</th><th>Unidad</th><th>Aviso mínimo</th><th></th></tr></thead>
+        <thead>
+          <tr>
+            <th>Ingrediente</th><th>Cantidad</th><th>Unidad</th><th>Aviso mínimo</th><th></th>
+          </tr>
+        </thead>
         <tbody id="inventoryBody"></tbody>
       </table>
     </section>
   </main>
 
+  <!-- Edit Modal -->
   <div id="editModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
       <div class="modal-header">
@@ -59,13 +83,28 @@
           </div>
           <div class="field">
             <label for="editUnit">Unidad</label>
-            <select id="editUnit" name="unit" required><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="l">l</option><option value="cda">cda</option><option value="cdita">cdita</option><option value="uds">uds</option></select>
+            <select id="editUnit" name="unit" required>
+              <option value="g">g</option><option value="kg">kg</option>
+              <option value="ml">ml</option><option value="l">l</option>
+              <option value="cda">cda</option><option value="cdita">cdita</option>
+              <option value="uds">uds</option>
+            </select>
           </div>
           <div class="field">
             <label for="editThreshold">Aviso mínimo</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <select id="editThreshold" name="low_stock_threshold" required><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select>
-              <select id="editThresholdUnit" name="low_stock_unit" required><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="l">l</option><option value="cda">cda</option><option value="cdita">cdita</option><option value="uds">uds</option></select>
+              <select id="editThreshold" name="low_stock_threshold" required>
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                <option value="5">5</option><option value="10">10</option><option value="15">15</option>
+                <option value="20">20</option><option value="25">25</option>
+                <option value="50">50</option><option value="100">100</option>
+              </select>
+              <select id="editThresholdUnit" name="low_stock_unit" required>
+                <option value="g">g</option><option value="kg">kg</option>
+                <option value="ml">ml</option><option value="l">l</option>
+                <option value="cda">cda</option><option value="cdita">cdita</option>
+                <option value="uds">uds</option>
+              </select>
             </div>
           </div>
         </div>
@@ -78,6 +117,8 @@
   </div>
 
   <script src="/static/js/api.js"></script>
+  <script src="/static/js/utils.js"></script>
   <script src="/static/js/inventory.js"></script>
-<script src="/static/js/nav-badge.js"></script></body>
+  <script src="/static/js/nav-badge.js"></script>
+</body>
 </html>

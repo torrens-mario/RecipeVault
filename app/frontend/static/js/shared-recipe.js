@@ -1,7 +1,9 @@
 (async () => {
   const container = document.getElementById('detail');
   if (!container) return;
+
   const r = await api.getRecipe(window.RECIPE_ID);
+
   container.innerHTML = `
     <article class="card">
       <div class="tag" style="width:max-content;">Receta compartida</div>
@@ -9,8 +11,15 @@
       <p class="muted">${r.category} · ${r.servings} raciones</p>
       <p>${r.description || ''}</p>
       <h3 style="margin-top:14px;">Ingredientes</h3>
-      <ul style="margin-left:18px;margin-top:6px;">${r.ingredients.map(i => `<li>${i.amount || ''} ${i.name}</li>`).join('')}</ul>
+      <ul style="margin-left:18px;margin-top:6px;">
+        ${r.ingredients.map(i => `<li>${i.amount || ''} ${i.name}</li>`).join('')}
+      </ul>
       <h3 style="margin-top:14px;">Pasos</h3>
-      <ol style="margin-left:18px;margin-top:6px;">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+      <ol style="margin-left:18px;margin-top:6px;">
+        ${r.steps.map(s => `<li>${s}</li>`).join('')}
+      </ol>
+      <div style="margin-top:16px;">
+        <a class="btn primary" href="/">Ver todas las recetas</a>
+      </div>
     </article>`;
 })();
