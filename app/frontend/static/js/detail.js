@@ -1,0 +1,62 @@
+(async () => {
+  const container = document.getElementById('detail');
+  if (!container) return;
+
+  const r = await api.getRecipe(window.RECIPE_ID);
+  const shareUrl = `${window.location.origin}/shared/${r.id}`;
+
+  container.innerHTML = `
+    <article class="card detail-card">
+      <img class="detail-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
+      <h1 style="font-size:1.5rem;margin-bottom:4px;">${r.title}</h1>
+      <p class="muted">${r.category} · ${r.servings} raciones</p>
+      <p style="margin-top:8px;">${r.description || ''}</p>
+      <h3 style="margin-top:14px;">Ingredientes</h3>
+      <ul style="margin-left:18px;margin-top:6px;">
+        ${r.ingredients.map(i => `<li>${i.amount || ''} ${i.name}</li>`).join('')}
+      </ul>
+      <h3 style="margin-top:14px;">Pasos</h3>
+      <ol style="margin-left:18px;margin-top:6px;">
+        ${r.steps.map(s => `<li>${s}</li>`).join('')}
+      </ol>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn primary" id="cookBtn">Cocinar (actualizar inventario)</button>
+        <button class="btn secondary" id="shareBtn">Copiar enlace para compartir</button>
+        <button class="btn secondary" id="favoriteBtn">${r.favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}</button>
+        <button class="btn ${r.planned_to_cook ? 'secondary' : 'primary'}" id="planBtn">
+          ${r.planned_to_cook ? 'Quitar de quiero cocinar' : 'Quiero cocinarla'}
+        </button>
+        <a class="btn secondary" href="/recipes/${r.id}/edit">Editar receta</a>
+        <button class="btn secondary" id="deleteBtn" style="color:#c9435b;border-color:#f2bbc4;">Eliminar receta</button>
+      </div>
+      <div id="cookResult" class="muted" style="margin-top:10px;"></div>
+      <div class="muted" style="margin-top:6px;word-break:break-all;">Enlace compartible: ${shareUrl}</div>
+    </article>`;
+
+  document.getElementById('shareBtn')?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Enlace copiado al portapapeles');
+    } catch (e) {
+      alert('No se pudo copiar el enlace. URL: ' + shareUrl);
+    }
+  });
+
+  document.getElementById('favoriteBtn')?.addEventListener('click', async () => {
+    await api.toggleFavorite(r.id);
+    location.reload();
+  });
+
+  document.getElementById('planBtn')?.addEventListener('click', async () => {
+    await api.togglePlan(r.id);
+    location.reload();
+  });
+
+  document.getElementById('deleteBtn')?.addEventListener('click', async () => {
+    if (confirm('¿Seguro que quieres eliminar esta receta? Esta acción no se puede deshacer.')) {
+      await api.deleteRecipe(r.id);
+      showToast('Receta eliminada');
+      window.location.href = '/';
+    }
+  });
+})();

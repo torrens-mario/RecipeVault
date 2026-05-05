@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receta compartida - RecipeVault</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="app-body">
+  <header class="topbar">
+    <div class="logo">RecipeVault</div>
+    <nav class="nav-links">
+      <a href="/">Mis recetas</a>
+      <a href="/inventory">Inventario</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div id="detail"></div>
+  </main>
+  <script>window.RECIPE_ID = {{ recipe_id }};</script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/shared-recipe.js"></script>
+</body>
+</html>

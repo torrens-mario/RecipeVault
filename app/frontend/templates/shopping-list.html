@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de la compra - RecipeVault</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="app-body">
+  <header class="topbar">
+    <div class="logo">RecipeVault</div>
+    <nav class="nav-links">
+      <a href="/">🍽 <span>Mis recetas</span></a>
+      <a href="/inventory">🥫 <span>Inventario</span></a>
+      <a href="/shopping-list" class="active">🛒 <span>Lista de la compra</span><span id="shoppingBadge" class="nav-badge" style="display:none">0</span></a>
+      <a href="/recipes/new">＋ <span>Nueva receta</span></a>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="page-hero">
+      <div>
+        <h1>🛒 <span>Lista de la compra</span></h1>
+        <p class="muted">Aquí ves lo que falta por stock mínimo y lo necesario para las recetas que quieres cocinar.</p>
+      </div>
+    </section>
+    <section class="shopping-grid">
+      <article class="card">
+        <h2 class="section-title">Stock bajo</h2>
+        <div id="lowStockList" class="shopping-list-block"></div>
+      </article>
+      <article class="card">
+        <h2 class="section-title">Recetas que quieres cocinar</h2>
+        <div id="plannedRecipesList" class="shopping-list-block"></div>
+      </article>
+    </section>
+    <section style="margin-top:18px;">
+      <article class="card">
+        <h2 class="section-title">Ingredientes que faltan para cocinar</h2>
+        <div id="missingIngredientsList" class="shopping-list-block"></div>
+      </article>
+    </section>
+  </main>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/shopping-list.js"></script>
+  <script src="/static/js/nav-badge.js"></script>
+</body>
+</html>

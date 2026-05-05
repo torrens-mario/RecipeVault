@@ -1,0 +1,10 @@
+project              = "RecipeVault"
+environment          = "shared"
+owner                = "mario_torrens@euneiz.com"
+cost_center          = "personal"
+
+resource_group_name  = "terraform-state-rg"
+location             = "Germany West Central"
+
+storage_account_name = "tfstaterecipevault"
+container_name       = "tfstate"
