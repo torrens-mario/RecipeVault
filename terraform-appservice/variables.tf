@@ -22,8 +22,14 @@ variable "cost_center" {
   default     = "personal"
 }
 
+variable "location" {
+  description = "Region de Azure."
+  type        = string
+  default     = "Germany West Central"
+}
+
 variable "resource_group_name" {
-  description = "Nombre del Resource Group ya existente."
+  description = "Nombre del Resource Group."
   type        = string
   default     = "recipevault-dev-rg"
 }
@@ -37,7 +43,7 @@ variable "app_service_plan_name" {
 variable "app_service_plan_sku" {
   description = "SKU del plan."
   type        = string
-  default     = "F1"
+  default     = "B1"
 }
 
 variable "app_service_name" {
@@ -55,7 +61,7 @@ variable "python_version" {
 variable "startup_command" {
   description = "Comando de arranque de FastAPI."
   type        = string
-  default     = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 backend.main:app"
+  default     = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 app:app --timeout 600"
 }
 
 variable "app_settings" {

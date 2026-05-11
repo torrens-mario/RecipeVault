@@ -1,5 +1,5 @@
-output "resource_group_name" {
-  value = data.azurerm_resource_group.main.name
+﻿output "resource_group_name" {
+  value = azurerm_resource_group.main.name
 }
 
 output "app_service_plan_name" {
