@@ -12,7 +12,7 @@ from database import (
 )
 from models import RecipeCreate, RecipeUpdate
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title="RecipeVault")
 init_db()
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend" / "static")), name="static")

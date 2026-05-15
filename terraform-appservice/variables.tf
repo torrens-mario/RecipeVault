@@ -22,8 +22,14 @@ variable "cost_center" {
   default     = "personal"
 }
 
+variable "location" {
+  description = "Region de Azure."
+  type        = string
+  default     = "Germany West Central"
+}
+
 variable "resource_group_name" {
-  description = "Nombre del Resource Group ya existente."
+  description = "Nombre del Resource Group."
   type        = string
   default     = "recipevault-dev-rg"
 }
@@ -37,7 +43,7 @@ variable "app_service_plan_name" {
 variable "app_service_plan_sku" {
   description = "SKU del plan."
   type        = string
-  default     = "F1"
+  default     = "B1"
 }
 
 variable "app_service_name" {
@@ -55,11 +61,41 @@ variable "python_version" {
 variable "startup_command" {
   description = "Comando de arranque de FastAPI."
   type        = string
-  default     = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 backend.main:app"
+  default     = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 app:app --timeout 600"
 }
 
 variable "app_settings" {
   description = "Variables de entorno extra para la aplicacion."
   type        = map(string)
   default     = {}
+}
+
+variable "github_org" {
+  description = "Organizacion o usuario de GitHub."
+  type        = string
+  default     = "torrens-mario"
+}
+
+variable "github_repo" {
+  description = "Nombre del repositorio de GitHub."
+  type        = string
+  default     = "RecipeVault"
+}
+
+variable "github_mi_name" {
+  description = "Nombre de la Managed Identity para GitHub Actions."
+  type        = string
+  default     = "recipevault-github-mi"
+}
+
+variable "tfstate_storage_account_name" {
+  description = "Nombre de la cuenta de almacenamiento del estado de Terraform."
+  type        = string
+  default     = "tfstaterecipevault"
+}
+
+variable "tfstate_resource_group_name" {
+  description = "Resource Group que contiene la cuenta de almacenamiento del estado."
+  type        = string
+  default     = "terraform-state-rg"
 }

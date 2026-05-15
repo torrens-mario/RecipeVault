@@ -6,7 +6,7 @@ cost_center           = "personal"
 resource_group_name   = "recipevault-dev-rg"
 
 app_service_plan_name = "recipevault-asp-dev"
-app_service_plan_sku  = "F1"
+app_service_plan_sku  = "B1"
 
 app_service_name      = "recipevault-api-dev"
 python_version        = "3.11"
@@ -15,3 +15,7 @@ startup_command       = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0
 app_settings = {
   ENVIRONMENT = "dev"
 }
+
+# GitHub Actions — Managed Identity (OIDC)
+github_org  = "torrens-mario"
+github_repo = "RecipeVault"

@@ -11,7 +11,6 @@ override.tf.json
 .terraform.lock.hcl
 
 # Variables sensibles
-terraform.tfvars
 *.auto.tfvars
 *.auto.tfvars.json
 
@@ -31,3 +30,6 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+deploy.zip
+logs.zip
