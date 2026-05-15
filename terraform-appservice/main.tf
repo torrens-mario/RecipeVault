@@ -100,3 +100,10 @@ resource "azurerm_role_assignment" "github_mi_tfstate" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.github_mi.principal_id
 }
+
+# Reader sobre terraform-state-rg para poder leer role assignments en CI
+resource "azurerm_role_assignment" "github_mi_tfstate_reader" {
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.tfstate_resource_group_name}"
+  role_definition_name = "Reader"
+  principal_id         = azurerm_user_assigned_identity.github_mi.principal_id
+}
