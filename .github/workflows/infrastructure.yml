@@ -54,7 +54,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="use_azuread_auth=true"
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive

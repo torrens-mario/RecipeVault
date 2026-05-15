@@ -92,14 +92,11 @@ resource "azurerm_role_assignment" "github_mi_contributor" {
   principal_id         = azurerm_user_assigned_identity.github_mi.principal_id
 }
 
-# Storage Blob Data Contributor sobre la cuenta de estado de Terraform
-data "azurerm_storage_account" "tfstate" {
-  name                = var.tfstate_storage_account_name
-  resource_group_name = var.tfstate_resource_group_name
-}
+data "azurerm_client_config" "current" {}
 
+# Storage Blob Data Contributor sobre la cuenta de estado de Terraform
 resource "azurerm_role_assignment" "github_mi_tfstate" {
-  scope                = data.azurerm_storage_account.tfstate.id
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.tfstate_resource_group_name}/providers/Microsoft.Storage/storageAccounts/${var.tfstate_storage_account_name}"
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.github_mi.principal_id
 }

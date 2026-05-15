@@ -13,7 +13,6 @@ terraform {
     storage_account_name = "tfstaterecipevault"
     container_name       = "tfstate"
     key                  = "recipevault-appservice-dev.tfstate"
-    use_azuread_auth     = true
   }
 }
 
