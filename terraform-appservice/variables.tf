@@ -83,7 +83,7 @@ variable "storage_account_name" {
 variable "db_location" {
   description = "Region para el servidor PostgreSQL (puede diferir del resto si hay restricciones)."
   type        = string
-  default     = "West Europe"
+  default     = "East US"
 }
 
 variable "db_server_name" {
