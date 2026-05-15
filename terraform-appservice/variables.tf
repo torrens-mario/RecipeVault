@@ -70,32 +70,3 @@ variable "app_settings" {
   default     = {}
 }
 
-variable "github_org" {
-  description = "Organizacion o usuario de GitHub."
-  type        = string
-  default     = "torrens-mario"
-}
-
-variable "github_repo" {
-  description = "Nombre del repositorio de GitHub."
-  type        = string
-  default     = "RecipeVault"
-}
-
-variable "github_mi_name" {
-  description = "Nombre de la Managed Identity para GitHub Actions."
-  type        = string
-  default     = "recipevault-github-mi"
-}
-
-variable "tfstate_storage_account_name" {
-  description = "Nombre de la cuenta de almacenamiento del estado de Terraform."
-  type        = string
-  default     = "tfstaterecipevault"
-}
-
-variable "tfstate_resource_group_name" {
-  description = "Resource Group que contiene la cuenta de almacenamiento del estado."
-  type        = string
-  default     = "terraform-state-rg"
-}

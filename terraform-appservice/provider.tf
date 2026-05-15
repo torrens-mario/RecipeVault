@@ -9,7 +9,10 @@ terraform {
   }
 
   backend "azurerm" {
-    resource_group_name  = "terraform-state-rg"
+    use_oidc             = true
+    use_azuread_auth     = true
+    tenant_id            = "78f3a279-48c8-4670-9162-a63c451c9fae"
+    client_id            = "181260f1-78e0-453a-b1e0-7c3ac5bab3b7"
     storage_account_name = "tfstaterecipevault"
     container_name       = "tfstate"
     key                  = "recipevault-appservice-dev.tfstate"
