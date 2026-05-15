@@ -9,6 +9,17 @@ on:
     branches: [main]
     paths:
       - 'terraform-appservice/**'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Accion de Terraform'
+        required: true
+        type: choice
+        default: plan
+        options:
+          - plan
+          - apply
+          - destroy
 
 # OIDC requiere permiso para solicitar el token de identidad
 permissions:
@@ -23,7 +34,11 @@ concurrency:
 
 jobs:
   terraform:
-    name: Terraform ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }}
+    name: >-
+      Terraform
+      ${{ github.event_name == 'pull_request' && 'Plan (PR)' ||
+          github.event_name == 'workflow_dispatch' && inputs.action ||
+          'Apply' }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -62,10 +77,15 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+      # ── Plan ────────────────────────────────────────────────────────────────
       - name: Terraform Plan
         id: plan
+        if: |
+          github.event_name == 'pull_request' ||
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.action == 'plan')
         run: terraform plan -no-color -out=tfplan
-        continue-on-error: true  # mostramos el plan aunque haya cambios destructivos
+        continue-on-error: true
 
       - name: Comentar plan en el PR
         uses: actions/github-script@v7
@@ -97,14 +117,28 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+      # ── Apply ───────────────────────────────────────────────────────────────
       - name: Terraform Apply
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -no-color tfplan
-
-      - name: Resumen
-        if: github.event_name == 'push' && always()
+        if: |
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
         run: |
-          echo "### Infraestructura aplicada" >> $GITHUB_STEP_SUMMARY
+          if [ -f tfplan ]; then
+            terraform apply -auto-approve -no-color tfplan
+          else
+            terraform apply -auto-approve -no-color
+          fi
+
+      # ── Destroy ─────────────────────────────────────────────────────────────
+      - name: Terraform Destroy
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'destroy'
+        run: terraform destroy -auto-approve -no-color
+
+      # ── Resumen ─────────────────────────────────────────────────────────────
+      - name: Resumen
+        if: always()
+        run: |
+          echo "### Terraform — ${{ github.event_name == 'workflow_dispatch' && inputs.action || github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **App Service:** $(terraform output -raw app_service_name 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
           echo "- **URL:** $(terraform output -raw backend_url 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
