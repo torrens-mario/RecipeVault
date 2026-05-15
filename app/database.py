@@ -227,6 +227,12 @@ def list_recipes(user_id: int, q: Optional[str] = None):
         return [_recipe_row_to_model(r) for r in rows]
 
 
+def get_recipe_public(recipe_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(RecipeModel.id == recipe_id).first()
+        return _recipe_row_to_model(row) if row else None
+
+
 def get_recipe(recipe_id: int, user_id: int) -> Optional[Recipe]:
     with _db() as db:
         row = db.query(RecipeModel).filter(

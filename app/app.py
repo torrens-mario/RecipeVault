@@ -9,8 +9,8 @@ from auth import create_access_token, get_current_user_id
 from database import (
     authenticate_user, consume_ingredients_for_recipe, create_inventory_item,
     create_recipe, create_user, delete_inventory_item, delete_recipe,
-    get_recipe, get_shopping_list, get_user_by_id, list_inventory,
-    list_low_stock_items, list_recipes, toggle_favorite,
+    get_recipe, get_recipe_public, get_shopping_list, get_user_by_id,
+    list_inventory, list_low_stock_items, list_recipes, toggle_favorite,
     toggle_planned_to_cook, update_inventory_item, update_recipe,
     update_recipe_image, init_db,
 )
@@ -58,6 +58,13 @@ def detail_page(request: Request, recipe_id: int):
 @app.get("/shared/{recipe_id}", response_class=HTMLResponse)
 def shared_recipe_page(request: Request, recipe_id: int):
     return templates.TemplateResponse("shared-recipe.html", {"request": request, "recipe_id": recipe_id})
+
+@app.get("/api/shared/{recipe_id}")
+def api_get_shared_recipe(recipe_id: int):
+    recipe = get_recipe_public(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
+    return recipe.model_dump()
 
 @app.get("/inventory", response_class=HTMLResponse)
 def inventory_page(request: Request):
