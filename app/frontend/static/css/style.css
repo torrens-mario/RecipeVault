@@ -47,3 +47,20 @@ a{text-decoration:none;color:inherit}
 .nav-links a.active span{text-decoration:none}
 .nav-badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#c9435b;color:#fff;font-size:.72rem;align-items:center;justify-content:center;line-height:1;font-weight:700}
 @media (max-width:720px){.nav-links a span{display:none}.nav-links a{padding:8px 10px;gap:0}.nav-badge{position:absolute;top:-4px;right:-4px}}
+
+.nav-logout{margin-left:auto;color:#7a5a46!important}
+.nav-logout:hover{background:#fff0ec!important}
+
+/* ── Auth pages ───────────────────────────────────────────────────────────── */
+.auth-body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.auth-card{width:min(420px,100%);background:#fffaf5;border:1px solid #ead7c5;border-radius:24px;padding:32px 28px;box-shadow:0 24px 60px rgba(44,26,16,.12);display:grid;gap:20px}
+.auth-logo{font-weight:700;font-size:1.3rem;letter-spacing:.03em;color:#2f7a5c;text-align:center}
+.auth-title{font-size:1.5rem;text-align:center}
+.auth-form{display:grid;gap:14px}
+.auth-form label{display:grid;gap:6px;font-size:.9rem;color:#5c4030}
+.auth-form input{padding:12px 14px;border-radius:12px;border:1px solid #e0cbb7;background:#fff;font:inherit;width:100%}
+.auth-form input:focus{outline:2px solid #2f7a5c;border-color:#2f7a5c}
+.auth-error{color:#c9435b;font-size:.9rem;padding:8px 12px;border-radius:10px;background:#fff0f2;border:1px solid #f2bbc4}
+.auth-switch{text-align:center;font-size:.9rem;color:#8a6c57}
+.auth-switch a{color:#2f7a5c;font-weight:600}
+.btn.full-width{width:100%}

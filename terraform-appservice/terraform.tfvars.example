@@ -10,12 +10,23 @@ app_service_plan_sku  = "B1"
 
 app_service_name      = "recipevault-api-dev"
 python_version        = "3.11"
-startup_command       = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 backend.main:app"
+startup_command       = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 app:app --timeout 600"
+
+# Storage Account para imagenes (3-24 chars, solo minusculas y numeros, globalmente unico)
+storage_account_name  = "recipevaultimgdev"
+
+# PostgreSQL Flexible Server
+db_server_name        = "recipevault-db-dev"
+db_name               = "recipevault"
+db_admin_username     = "recipevaultadmin"
+db_sku                = "B_Standard_B1ms"
+
+# Key Vault (3-24 chars, globalmente unico)
+key_vault_name        = "recipevault-kv-dev"
+
+# Principal ID del Managed Identity de GitHub Actions
+deployer_principal_id = "067f8ef3-a303-4ec0-b459-a25b56463479"
 
 app_settings = {
   ENVIRONMENT = "dev"
 }
-
-# GitHub Actions — Managed Identity (OIDC)
-github_org  = "torrens-mario"
-github_repo = "RecipeVault"
