@@ -77,7 +77,7 @@ resource "azurerm_storage_container" "images" {
 resource "azurerm_postgresql_flexible_server" "main" {
   name                   = var.db_server_name
   resource_group_name    = azurerm_resource_group.main.name
-  location               = azurerm_resource_group.main.location
+  location               = var.db_location
   version                = "16"
   administrator_login    = var.db_admin_username
   administrator_password = random_password.db_password.result
