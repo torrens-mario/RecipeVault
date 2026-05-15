@@ -30,8 +30,9 @@ locals {
     ENABLE_ORYX_BUILD              = "true"
     WEBSITES_PORT                  = "8000"
     PYTHONUNBUFFERED               = "1"
-    DATABASE_URL                   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/DATABASE-URL/)"
-    JWT_SECRET                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/JWT-SECRET/)"
+    AZURE_CLIENT_ID                = azurerm_user_assigned_identity.app.client_id
+    DATABASE_URL                   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/DATABASE-URL/;ClientId=${azurerm_user_assigned_identity.app.client_id})"
+    JWT_SECRET                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/JWT-SECRET/;ClientId=${azurerm_user_assigned_identity.app.client_id})"
     BLOB_ACCOUNT_URL               = "https://${azurerm_storage_account.main.name}.blob.core.windows.net"
     BLOB_CONTAINER                 = azurerm_storage_container.images.name
   }
@@ -43,6 +44,15 @@ resource "azurerm_resource_group" "main" {
   name     = var.resource_group_name
   location = var.location
   tags     = local.common_tags
+}
+
+# ── User Assigned Managed Identity (para App Service) ─────────────────────────
+
+resource "azurerm_user_assigned_identity" "app" {
+  name                = "${var.app_service_name}-id"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  tags                = local.common_tags
 }
 
 # ── Storage Account (imagenes de recetas) ──────────────────────────────────────
@@ -149,7 +159,8 @@ resource "azurerm_linux_web_app" "main" {
   https_only          = true
 
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.app.id]
   }
 
   site_config {
@@ -167,14 +178,16 @@ resource "azurerm_linux_web_app" "main" {
   tags = local.common_tags
 }
 
+# ── Role assignments para la UAI del App Service ───────────────────────────────
+
 resource "azurerm_role_assignment" "app_kv_secrets_user" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
+  principal_id         = azurerm_user_assigned_identity.app.principal_id
 }
 
 resource "azurerm_role_assignment" "app_storage_blob_contributor" {
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
+  principal_id         = azurerm_user_assigned_identity.app.principal_id
 }

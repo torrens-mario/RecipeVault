@@ -19,7 +19,7 @@ output "backend_url" {
 }
 
 output "app_service_principal_id" {
-  value = azurerm_linux_web_app.main.identity[0].principal_id
+  value = azurerm_user_assigned_identity.app.principal_id
 }
 
 output "db_server_fqdn" {
