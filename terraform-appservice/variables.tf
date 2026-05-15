@@ -80,6 +80,12 @@ variable "storage_account_name" {
 
 # ── PostgreSQL ─────────────────────────────────────────────────────────────────
 
+variable "db_location" {
+  description = "Region para el servidor PostgreSQL (puede diferir del resto si hay restricciones)."
+  type        = string
+  default     = "West Europe"
+}
+
 variable "db_server_name" {
   description = "Nombre globalmente unico del servidor PostgreSQL Flexible."
   type        = string
