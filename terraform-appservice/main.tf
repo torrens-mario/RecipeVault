@@ -50,43 +50,56 @@ resource "azurerm_linux_web_app" "main" {
     }
   }
 
-app_settings = merge(var.app_settings, local.default_app_settings)
+  app_settings = merge(var.app_settings, local.default_app_settings)
 
   tags = local.common_tags
 }
 
-resource "null_resource" "deploy_app" {
-  depends_on = [time_sleep.wait_for_app]
+# ── Managed Identity para GitHub Actions (OIDC) ──────────────────────────────
 
-  triggers = {
-    always_run = timestamp()
-  }
+resource "azurerm_user_assigned_identity" "github_mi" {
+  name                = var.github_mi_name
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
 
-  provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
-    command     = <<EOT
-      $appDir = Resolve-Path "${path.module}/../app"
-      $zipPath = Join-Path $env:TEMP "recipevault-deploy.zip"
-      if (Test-Path $zipPath) { Remove-Item $zipPath }
-      Push-Location $appDir
-      & "D:\7-Zip\7z.exe" a -tzip $zipPath app.py models.py database.py requirements.txt frontend
-      Pop-Location
-      az webapp deploy `
-        --resource-group ${var.resource_group_name} `
-        --name ${var.app_service_name} `
-        --src-path $zipPath `
-        --type zip
-    EOT
-  }
-
-  provisioner "local-exec" {
-    when        = destroy
-    interpreter = ["PowerShell", "-Command"]
-    command     = "Write-Host 'Infraestructura destruida correctamente'"
-  }
+  tags = local.common_tags
 }
 
-resource "time_sleep" "wait_for_app" {
-  depends_on      = [azurerm_linux_web_app.main]
-  create_duration = "30s"
+# Credencial federada para pushes a main (infra apply + deploys)
+resource "azurerm_federated_identity_credential" "github_main" {
+  name                = "github-main-branch"
+  resource_group_name = azurerm_resource_group.main.name
+  parent_id           = azurerm_user_assigned_identity.github_mi.id
+  audience            = ["api://AzureADApplications"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  subject             = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+}
+
+# Credencial federada para Pull Requests (terraform plan)
+resource "azurerm_federated_identity_credential" "github_pr" {
+  name                = "github-pull-request"
+  resource_group_name = azurerm_resource_group.main.name
+  parent_id           = azurerm_user_assigned_identity.github_mi.id
+  audience            = ["api://AzureADApplications"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  subject             = "repo:${var.github_org}/${var.github_repo}:pull_request"
+}
+
+# Contributor sobre el Resource Group (gestionar App Service)
+resource "azurerm_role_assignment" "github_mi_contributor" {
+  scope                = azurerm_resource_group.main.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.github_mi.principal_id
+}
+
+# Storage Blob Data Contributor sobre la cuenta de estado de Terraform
+data "azurerm_storage_account" "tfstate" {
+  name                = var.tfstate_storage_account_name
+  resource_group_name = var.tfstate_resource_group_name
+}
+
+resource "azurerm_role_assignment" "github_mi_tfstate" {
+  scope                = data.azurerm_storage_account.tfstate.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.github_mi.principal_id
 }

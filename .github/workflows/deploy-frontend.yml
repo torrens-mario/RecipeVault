@@ -1,0 +1,86 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/frontend/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+# Los deploys de frontend y backend comparten el mismo grupo para no solaparse
+concurrency:
+  group: deploy-appservice
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP:   recipevault-dev-rg
+  APP_SERVICE_NAME: recipevault-api-dev
+
+jobs:
+  deploy:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (Managed Identity — OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Crear ZIP con el frontend
+        run: |
+          cd app
+          zip -r ../deploy.zip . \
+            --exclude "*.pyc" \
+            --exclude "__pycache__/*" \
+            --exclude "venv/*" \
+            --exclude ".env*" \
+            --exclude "recipes.json" \
+            --exclude "inventory.json"
+
+      - name: Desplegar a App Service
+        run: |
+          az webapp deployment source config-zip \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.APP_SERVICE_NAME }} \
+            --src deploy.zip
+
+      - name: Reiniciar App Service
+        run: |
+          az webapp restart \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.APP_SERVICE_NAME }}
+
+      - name: Health check
+        run: |
+          URL=$(az webapp show \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.APP_SERVICE_NAME }} \
+            --query "defaultHostName" -o tsv)
+          echo "Comprobando https://$URL ..."
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$URL")
+            if [ "$STATUS" = "200" ]; then
+              echo "App respondiendo correctamente (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "Intento $i: HTTP $STATUS. Esperando 15s..."
+            sleep 15
+          done
+          echo "La app no respondio tras 10 intentos"
+          exit 1
+
+      - name: Resumen del despliegue
+        if: always()
+        run: |
+          echo "### Deploy Frontend completado" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Service:** ${{ env.APP_SERVICE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
