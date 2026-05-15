@@ -70,7 +70,7 @@ resource "azurerm_federated_identity_credential" "github_main" {
   name                = "github-main-branch"
   resource_group_name = azurerm_resource_group.main.name
   parent_id           = azurerm_user_assigned_identity.github_mi.id
-  audience            = ["api://AzureADApplications"]
+  audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
   subject             = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
 }
@@ -80,7 +80,7 @@ resource "azurerm_federated_identity_credential" "github_pr" {
   name                = "github-pull-request"
   resource_group_name = azurerm_resource_group.main.name
   parent_id           = azurerm_user_assigned_identity.github_mi.id
-  audience            = ["api://AzureADApplications"]
+  audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
   subject             = "repo:${var.github_org}/${var.github_repo}:pull_request"
 }
