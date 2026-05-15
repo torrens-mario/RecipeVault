@@ -1,43 +1,108 @@
+function _authHeaders(extra = {}) {
+  const token = localStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}`, ...extra } : { ...extra };
+}
+
+async function _fetch(url, opts = {}) {
+  const res = await fetch(url, opts);
+  if (res.status === 401) { window.location.href = '/login'; return null; }
+  return res;
+}
+
 const api = {
   async listRecipes(q = '') {
     const url = q ? `/api/recipes?q=${encodeURIComponent(q)}` : '/api/recipes';
-    return fetch(url).then(r => r.json());
+    const res = await _fetch(url, { headers: _authHeaders() });
+    return res ? res.json() : [];
   },
-  async getRecipe(id) { return fetch(`/api/recipes/${id}`).then(r => r.json()); },
+
+  async getRecipe(id) {
+    const res = await _fetch(`/api/recipes/${id}`, { headers: _authHeaders() });
+    return res ? res.json() : null;
+  },
+
   async createRecipe(payload) {
-    return fetch('/api/recipes', {
+    const res = await _fetch('/api/recipes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
-    }).then(r => r.json());
+    });
+    return res ? res.json() : null;
   },
+
   async updateRecipe(id, payload) {
-    return fetch(`/api/recipes/${id}`, {
+    const res = await _fetch(`/api/recipes/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
-    }).then(r => r.json());
+    });
+    return res ? res.json() : null;
   },
-  async toggleFavorite(id) { return fetch(`/api/recipes/${id}/favorite`, { method: 'POST' }).then(r => r.json()); },
-  async togglePlan(id) { return fetch(`/api/recipes/${id}/plan`, { method: 'POST' }).then(r => r.json()); },
-  async deleteRecipe(id) { return fetch(`/api/recipes/${id}`, { method: 'DELETE' }); },
-  async listInventory() { return fetch('/api/inventory').then(r => r.json()); },
-  async lowStockItems() { return fetch('/api/inventory/low-stock').then(r => r.json()); },
-  async shoppingList() { return fetch('/api/shopping-list').then(r => r.json()); },
-  async createInventoryItem(payload) {
-    return fetch('/api/inventory', {
+
+  async uploadRecipeImage(id, file) {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await _fetch(`/api/recipes/${id}/image`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(r => r.json());
+      headers: _authHeaders(),
+      body: form
+    });
+    return res ? res.json() : null;
   },
+
+  async toggleFavorite(id) {
+    const res = await _fetch(`/api/recipes/${id}/favorite`, { method: 'POST', headers: _authHeaders() });
+    return res ? res.json() : null;
+  },
+
+  async togglePlan(id) {
+    const res = await _fetch(`/api/recipes/${id}/plan`, { method: 'POST', headers: _authHeaders() });
+    return res ? res.json() : null;
+  },
+
+  async deleteRecipe(id) {
+    return _fetch(`/api/recipes/${id}`, { method: 'DELETE', headers: _authHeaders() });
+  },
+
+  async listInventory() {
+    const res = await _fetch('/api/inventory', { headers: _authHeaders() });
+    return res ? res.json() : [];
+  },
+
+  async lowStockItems() {
+    const res = await _fetch('/api/inventory/low-stock', { headers: _authHeaders() });
+    return res ? res.json() : [];
+  },
+
+  async shoppingList() {
+    const res = await _fetch('/api/shopping-list', { headers: _authHeaders() });
+    return res ? res.json() : null;
+  },
+
+  async createInventoryItem(payload) {
+    const res = await _fetch('/api/inventory', {
+      method: 'POST',
+      headers: _authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    return res ? res.json() : null;
+  },
+
   async updateInventoryItem(id, payload) {
-    return fetch(`/api/inventory/${id}`, {
+    const res = await _fetch(`/api/inventory/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
-    }).then(r => r.json());
+    });
+    return res ? res.json() : null;
   },
-  async deleteInventoryItem(id) { return fetch(`/api/inventory/${id}`, { method: 'DELETE' }); },
-  async cookRecipe(id) { return fetch(`/api/recipes/${id}/cook`, { method: 'POST' }).then(r => r.json()); }
+
+  async deleteInventoryItem(id) {
+    return _fetch(`/api/inventory/${id}`, { method: 'DELETE', headers: _authHeaders() });
+  },
+
+  async cookRecipe(id) {
+    const res = await _fetch(`/api/recipes/${id}/cook`, { method: 'POST', headers: _authHeaders() });
+    return res ? res.json() : null;
+  }
 };

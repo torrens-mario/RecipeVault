@@ -69,7 +69,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init -backend-config="use_azuread_auth=true"
+        run: terraform init
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
@@ -142,4 +142,6 @@ jobs:
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **App Service:** $(terraform output -raw app_service_name 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
           echo "- **URL:** $(terraform output -raw backend_url 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
-          echo "- **MI Client ID:** $(terraform output -raw managed_identity_client_id 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Base de datos:** $(terraform output -raw db_server_fqdn 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Key Vault:** $(terraform output -raw key_vault_uri 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Storage:** $(terraform output -raw storage_account_name 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY

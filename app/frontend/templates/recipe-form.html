@@ -14,6 +14,7 @@
       <a href="/inventory">🥫 <span>Inventario</span></a>
       <a href="/shopping-list">🛒 <span>Lista de la compra</span><span id="shoppingBadge" class="nav-badge" style="display:none">0</span></a>
       <a href="/recipes/new" class="active">＋ <span>Nueva receta</span></a>
+      <a href="#" onclick="logout();return false;" class="nav-logout">👤 <span id="navUser"></span></a>
     </nav>
   </header>
   <main class="container">
@@ -32,6 +33,7 @@
       <button type="submit" class="btn primary" id="submitBtn">Guardar receta</button>
     </form>
   </main>
+  <script src="/static/js/auth.js"></script>
   <script src="/static/js/api.js"></script>
   <script src="/static/js/utils.js"></script>
   {% if edit_recipe_id is defined %}

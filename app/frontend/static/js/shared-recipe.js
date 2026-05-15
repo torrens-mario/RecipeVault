@@ -2,7 +2,9 @@
   const container = document.getElementById('detail');
   if (!container) return;
 
-  const r = await api.getRecipe(window.RECIPE_ID);
+  const res = await fetch(`/api/shared/${window.RECIPE_ID}`);
+  if (!res.ok) { container.innerHTML = '<p class="muted">Receta no encontrada.</p>'; return; }
+  const r = await res.json();
 
   container.innerHTML = `
     <article class="card">

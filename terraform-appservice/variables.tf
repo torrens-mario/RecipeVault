@@ -70,3 +70,50 @@ variable "app_settings" {
   default     = {}
 }
 
+# ── Storage ────────────────────────────────────────────────────────────────────
+
+variable "storage_account_name" {
+  description = "Nombre de la Storage Account para imagenes (3-24 chars, solo minusculas y numeros)."
+  type        = string
+  default     = "recipevaultimgdev"
+}
+
+# ── PostgreSQL ─────────────────────────────────────────────────────────────────
+
+variable "db_server_name" {
+  description = "Nombre globalmente unico del servidor PostgreSQL Flexible."
+  type        = string
+  default     = "recipevault-db-dev"
+}
+
+variable "db_name" {
+  description = "Nombre de la base de datos dentro del servidor."
+  type        = string
+  default     = "recipevault"
+}
+
+variable "db_admin_username" {
+  description = "Usuario administrador de PostgreSQL."
+  type        = string
+  default     = "recipevaultadmin"
+}
+
+variable "db_sku" {
+  description = "SKU del servidor PostgreSQL Flexible."
+  type        = string
+  default     = "B_Standard_B1ms"
+}
+
+# ── Key Vault ──────────────────────────────────────────────────────────────────
+
+variable "key_vault_name" {
+  description = "Nombre globalmente unico del Key Vault (3-24 chars)."
+  type        = string
+  default     = "recipevault-kv-dev"
+}
+
+variable "deployer_principal_id" {
+  description = "Principal ID del Managed Identity de GitHub Actions (necesita escribir secretos en KV)."
+  type        = string
+  default     = "067f8ef3-a303-4ec0-b459-a25b56463479"
+}

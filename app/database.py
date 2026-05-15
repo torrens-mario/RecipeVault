@@ -1,60 +1,49 @@
-import json
-from pathlib import Path
-from typing import List, Optional
+import os
+from contextlib import contextmanager
+from typing import Optional
+
+from sqlalchemy import create_engine, or_, func
+from sqlalchemy.orm import sessionmaker
+
+from auth import hash_password, verify_password
+from db_models import Base, InventoryItem as InventoryItemModel, Recipe as RecipeModel, User as UserModel
 from models import Recipe, RecipeCreate, RecipeUpdate
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-RECIPES_PATH = BASE_DIR / "recipes.json"
-INVENTORY_PATH = BASE_DIR / "inventory.json"
+# ── Engine ─────────────────────────────────────────────────────────────────────
 
-SAMPLE_RECIPES = [
-    {
-        "id": 1,
-        "title": "Tortilla rápida",
-        "description": "Una tortilla sencilla para diario.",
-        "category": "Cena",
-        "servings": 2,
-        "ingredients": [
-            {"name": "Huevos", "amount": "4 uds"},
-            {"name": "Patata", "amount": "2 uds"},
-            {"name": "Sal", "amount": "1 cdita"}
-        ],
-        "steps": [
-            "Pela y corta la patata.",
-            "Fríe la patata.",
-            "Mezcla con huevo batido.",
-            "Cuaja la tortilla por ambos lados."
-        ],
-        "tags": ["rápido", "española"],
-        "favorite": True,
-        "planned_to_cook": False,
-        "image": "https://images.unsplash.com/photo-1515516969-d4008cc6241a?auto=format&fit=crop&w=1200&q=80"
-    },
-    {
-        "id": 2,
-        "title": "Pasta al pesto",
-        "description": "Pasta fácil con salsa pesto.",
-        "category": "Comida",
-        "servings": 3,
-        "ingredients": [
-            {"name": "Pasta", "amount": "300 g"},
-            {"name": "Pesto", "amount": "3 cda"}
-        ],
-        "steps": ["Cuece la pasta.", "Mezcla con el pesto y sirve."],
-        "tags": ["italiana"],
-        "favorite": False,
-        "planned_to_cook": True,
-        "image": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=1200&q=80"
-    }
-]
+_engine = None
+_SessionLocal = None
 
-SAMPLE_INVENTORY = [
-    {"id": 1, "name": "Huevos", "quantity": 12, "unit": "uds", "low_stock_threshold": 4, "low_stock_unit": "uds"},
-    {"id": 2, "name": "Patata", "quantity": 10, "unit": "uds", "low_stock_threshold": 3, "low_stock_unit": "uds"},
-    {"id": 3, "name": "Sal", "quantity": 200, "unit": "g", "low_stock_threshold": 10, "low_stock_unit": "cda"},
-    {"id": 4, "name": "Pasta", "quantity": 500, "unit": "g", "low_stock_threshold": 150, "low_stock_unit": "g"},
-    {"id": 5, "name": "Pesto", "quantity": 20, "unit": "g", "low_stock_threshold": 3, "low_stock_unit": "cda"}
-]
+
+def _get_engine():
+    global _engine, _SessionLocal
+    if _engine is None:
+        url = os.environ["DATABASE_URL"]
+        _engine = create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
+        _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
+    return _engine
+
+
+@contextmanager
+def _db():
+    _get_engine()
+    session = _SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def init_db():
+    engine = _get_engine()
+    Base.metadata.create_all(bind=engine)
+
+
+# ── Unit conversion (unchanged logic) ─────────────────────────────────────────
 
 RECIPE_IMAGE_MAP = {
     "tortilla": "https://images.unsplash.com/photo-1515516969-d4008cc6241a?auto=format&fit=crop&w=1200&q=80",
@@ -89,61 +78,8 @@ DENSITY_LIKE = {
 }
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def _init_file(path: Path, sample: list):
-    if not path.exists():
-        path.write_text(json.dumps(sample, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def init_db():
-    _init_file(RECIPES_PATH, SAMPLE_RECIPES)
-    _init_file(INVENTORY_PATH, SAMPLE_INVENTORY)
-
-
-def _read_recipes() -> list:
-    data = json.loads(RECIPES_PATH.read_text(encoding="utf-8"))
-    changed = False
-    for r in data:
-        if "image" not in r:
-            r["image"] = _pick_recipe_image(r.get("title", ""), r.get("category", ""), r.get("ingredients", []))
-            changed = True
-        if "favorite" not in r:
-            r["favorite"] = False
-            changed = True
-        if "planned_to_cook" not in r:
-            r["planned_to_cook"] = False
-            changed = True
-    if changed:
-        _write_recipes(data)
-    return data
-
-
-def _write_recipes(data: list) -> None:
-    RECIPES_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def _read_inventory() -> list:
-    data = json.loads(INVENTORY_PATH.read_text(encoding="utf-8"))
-    changed = False
-    for item in data:
-        if "low_stock_threshold" not in item:
-            item["low_stock_threshold"] = 5
-            changed = True
-        if "low_stock_unit" not in item:
-            item["low_stock_unit"] = item.get("unit", "uds")
-            changed = True
-    if changed:
-        _write_inventory(data)
-    return data
-
-
-def _write_inventory(data: list) -> None:
-    INVENTORY_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
 def _pick_recipe_image(title: str, category: str, ingredients: list) -> str:
-    haystack = " ".join([title, category] + [i.get("name", "") for i in ingredients]).lower()
+    haystack = " ".join([title, category] + [i.get("name", "") if isinstance(i, dict) else i for i in ingredients]).lower()
     for key, url in RECIPE_IMAGE_MAP.items():
         if key in haystack:
             return url
@@ -158,7 +94,7 @@ def _normalize_name(name: str) -> str:
     return (name or "").strip().lower()
 
 
-def _parse_ingredient_text(name: str, amount: str) -> tuple[float, str, str]:
+def _parse_ingredient_text(name: str, amount: str):
     amount = (amount or "").strip()
     name = (name or "").strip()
     parts = amount.split()
@@ -200,135 +136,244 @@ def _convert_between_units(name: str, required_qty: float, required_unit: str, s
     return False, 0.0, 0.0
 
 
-# ── Recipe CRUD ───────────────────────────────────────────────────────────────
-
-def list_recipes(q: Optional[str] = None) -> List[Recipe]:
-    items = _read_recipes()
-    if q:
-        q = q.lower()
-        items = [r for r in items if q in r["title"].lower() or q in r["description"].lower()]
-    return [Recipe(**r) for r in items]
-
-
-def get_recipe(recipe_id: int) -> Optional[Recipe]:
-    for r in _read_recipes():
-        if r["id"] == recipe_id:
-            return Recipe(**r)
-    return None
+def _is_low_stock(item: dict) -> bool:
+    qty = float(item.get("quantity", 0))
+    unit = item.get("unit", "")
+    threshold = float(item.get("low_stock_threshold", 0))
+    threshold_unit = item.get("low_stock_unit", unit)
+    convertible, threshold_base, available_base = _convert_between_units(
+        item.get("name", ""), threshold, threshold_unit, qty, unit
+    )
+    if not convertible:
+        return qty <= threshold and _normalize_unit(unit) == _normalize_unit(threshold_unit)
+    return available_base <= threshold_base
 
 
-def create_recipe(payload: RecipeCreate) -> Recipe:
-    items = _read_recipes()
-    next_id = max([r["id"] for r in items], default=0) + 1
-    record = payload.model_dump()
-    record["id"] = next_id
-    record["image"] = _pick_recipe_image(record.get("title", ""), record.get("category", ""), record.get("ingredients", []))
-    items.append(record)
-    _write_recipes(items)
-    return Recipe(**record)
+def _recipe_row_to_model(row: RecipeModel) -> Recipe:
+    return Recipe(
+        id=row.id,
+        title=row.title,
+        description=row.description or "",
+        category=row.category or "",
+        servings=row.servings or 1,
+        ingredients=row.ingredients or [],
+        steps=row.steps or [],
+        tags=row.tags or [],
+        favorite=row.favorite or False,
+        planned_to_cook=row.planned_to_cook or False,
+        image=row.image or "",
+    )
 
 
-def update_recipe(recipe_id: int, payload: RecipeUpdate) -> Optional[Recipe]:
-    items = _read_recipes()
-    for i, r in enumerate(items):
-        if r["id"] == recipe_id:
-            record = payload.model_dump()
-            record["id"] = recipe_id
-            # Preserve existing image if none provided
-            record["image"] = r.get("image") or _pick_recipe_image(
-                record.get("title", ""), record.get("category", ""), record.get("ingredients", [])
-            )
-            # Preserve favorite and planned_to_cook if not in payload
-            record["favorite"] = record.get("favorite", r.get("favorite", False))
-            record["planned_to_cook"] = record.get("planned_to_cook", r.get("planned_to_cook", False))
-            items[i] = record
-            _write_recipes(items)
-            return Recipe(**record)
-    return None
-
-
-def toggle_favorite(recipe_id: int) -> Optional[Recipe]:
-    items = _read_recipes()
-    for i, r in enumerate(items):
-        if r["id"] == recipe_id:
-            r["favorite"] = not r.get("favorite", False)
-            items[i] = r
-            _write_recipes(items)
-            return Recipe(**r)
-    return None
-
-
-def toggle_planned_to_cook(recipe_id: int) -> Optional[Recipe]:
-    items = _read_recipes()
-    for i, r in enumerate(items):
-        if r["id"] == recipe_id:
-            r["planned_to_cook"] = not r.get("planned_to_cook", False)
-            items[i] = r
-            _write_recipes(items)
-            return Recipe(**r)
-    return None
-
-
-def delete_recipe(recipe_id: int) -> bool:
-    items = _read_recipes()
-    new_items = [r for r in items if r["id"] != recipe_id]
-    if len(new_items) == len(items):
-        return False
-    _write_recipes(new_items)
-    return True
-
-
-# ── Inventory CRUD ────────────────────────────────────────────────────────────
-
-def list_inventory() -> list:
-    return _read_inventory()
-
-
-def create_inventory_item(name: str, quantity: float, unit: str, low_stock_threshold: float = 5, low_stock_unit: Optional[str] = None) -> dict:
-    items = _read_inventory()
-    next_id = max([i["id"] for i in items], default=0) + 1
-    normalized_unit = _normalize_unit(unit)
-    record = {
-        "id": next_id,
-        "name": name,
-        "quantity": quantity,
-        "unit": normalized_unit,
-        "low_stock_threshold": low_stock_threshold,
-        "low_stock_unit": _normalize_unit(low_stock_unit or normalized_unit)
+def _inventory_row_to_dict(row: InventoryItemModel) -> dict:
+    return {
+        "id": row.id,
+        "name": row.name,
+        "quantity": row.quantity,
+        "unit": row.unit,
+        "low_stock_threshold": row.low_stock_threshold,
+        "low_stock_unit": row.low_stock_unit,
     }
-    items.append(record)
-    _write_inventory(items)
-    return record
 
 
-def update_inventory_item(item_id: int, name: str, quantity: float, unit: str, low_stock_threshold: Optional[float] = None, low_stock_unit: Optional[str] = None) -> Optional[dict]:
-    items = _read_inventory()
-    for idx, item in enumerate(items):
-        if item["id"] == item_id:
-            record = {
-                "id": item_id,
-                "name": name,
-                "quantity": quantity,
-                "unit": _normalize_unit(unit),
-                "low_stock_threshold": item.get("low_stock_threshold", 5) if low_stock_threshold is None else low_stock_threshold,
-                "low_stock_unit": _normalize_unit(low_stock_unit or item.get("low_stock_unit", unit))
-            }
-            items[idx] = record
-            _write_inventory(items)
-            return record
-    return None
+# ── User CRUD ──────────────────────────────────────────────────────────────────
+
+def create_user(username: str, email: str, password: str) -> Optional[dict]:
+    with _db() as db:
+        if db.query(UserModel).filter(
+            or_(UserModel.username == username, UserModel.email == email)
+        ).first():
+            return None
+        user = UserModel(
+            username=username,
+            email=email,
+            hashed_password=hash_password(password),
+        )
+        db.add(user)
+        db.flush()
+        return {"id": user.id, "username": user.username, "email": user.email}
 
 
-def delete_inventory_item(item_id: int) -> bool:
-    items = _read_inventory()
-    new_items = [i for i in items if i["id"] != item_id]
-    if len(new_items) == len(items):
-        return False
-    _write_inventory(new_items)
-    return True
+def authenticate_user(email: str, password: str) -> Optional[dict]:
+    with _db() as db:
+        user = db.query(UserModel).filter(UserModel.email == email).first()
+        if not user or not verify_password(password, user.hashed_password):
+            return None
+        return {"id": user.id, "username": user.username, "email": user.email}
 
 
-# ── Cooking & shopping ────────────────────────────────────────────────────────
+def get_user_by_id(user_id: int) -> Optional[dict]:
+    with _db() as db:
+        user = db.query(UserModel).filter(UserModel.id == user_id).first()
+        if not user:
+            return None
+        return {"id": user.id, "username": user.username, "email": user.email}
+
+
+# ── Recipe CRUD ────────────────────────────────────────────────────────────────
+
+def list_recipes(user_id: int, q: Optional[str] = None):
+    with _db() as db:
+        query = db.query(RecipeModel).filter(RecipeModel.user_id == user_id)
+        if q:
+            ql = f"%{q.lower()}%"
+            query = query.filter(
+                or_(
+                    func.lower(RecipeModel.title).like(ql),
+                    func.lower(RecipeModel.description).like(ql),
+                )
+            )
+        rows = query.order_by(RecipeModel.created_at.desc()).all()
+        return [_recipe_row_to_model(r) for r in rows]
+
+
+def get_recipe_public(recipe_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(RecipeModel.id == recipe_id).first()
+        return _recipe_row_to_model(row) if row else None
+
+
+def get_recipe(recipe_id: int, user_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        return _recipe_row_to_model(row) if row else None
+
+
+def create_recipe(payload: RecipeCreate, user_id: int) -> Recipe:
+    data = payload.model_dump()
+    image = data.get("image") or _pick_recipe_image(
+        data.get("title", ""), data.get("category", ""), data.get("ingredients", [])
+    )
+    with _db() as db:
+        row = RecipeModel(user_id=user_id, **{**data, "image": image})
+        db.add(row)
+        db.flush()
+        return _recipe_row_to_model(row)
+
+
+def update_recipe(recipe_id: int, payload: RecipeUpdate, user_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        if not row:
+            return None
+        data = payload.model_dump()
+        for field, value in data.items():
+            if value is not None or field in ("favorite", "planned_to_cook"):
+                setattr(row, field, value)
+        if not row.image:
+            row.image = _pick_recipe_image(row.title or "", row.category or "", row.ingredients or [])
+        return _recipe_row_to_model(row)
+
+
+def update_recipe_image(recipe_id: int, user_id: int, image_url: str) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        if not row:
+            return None
+        row.image = image_url
+        return _recipe_row_to_model(row)
+
+
+def toggle_favorite(recipe_id: int, user_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        if not row:
+            return None
+        row.favorite = not row.favorite
+        return _recipe_row_to_model(row)
+
+
+def toggle_planned_to_cook(recipe_id: int, user_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        if not row:
+            return None
+        row.planned_to_cook = not row.planned_to_cook
+        return _recipe_row_to_model(row)
+
+
+def delete_recipe(recipe_id: int, user_id: int) -> bool:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        if not row:
+            return False
+        db.delete(row)
+        return True
+
+
+# ── Inventory CRUD ─────────────────────────────────────────────────────────────
+
+def list_inventory(user_id: int) -> list:
+    with _db() as db:
+        rows = db.query(InventoryItemModel).filter(
+            InventoryItemModel.user_id == user_id
+        ).order_by(InventoryItemModel.name).all()
+        return [_inventory_row_to_dict(r) for r in rows]
+
+
+def create_inventory_item(
+    user_id: int, name: str, quantity: float, unit: str,
+    low_stock_threshold: float = 5, low_stock_unit: Optional[str] = None
+) -> dict:
+    normalized_unit = _normalize_unit(unit)
+    with _db() as db:
+        row = InventoryItemModel(
+            user_id=user_id,
+            name=name,
+            quantity=quantity,
+            unit=normalized_unit,
+            low_stock_threshold=low_stock_threshold,
+            low_stock_unit=_normalize_unit(low_stock_unit or normalized_unit),
+        )
+        db.add(row)
+        db.flush()
+        return _inventory_row_to_dict(row)
+
+
+def update_inventory_item(
+    item_id: int, user_id: int, name: str, quantity: float, unit: str,
+    low_stock_threshold: Optional[float] = None, low_stock_unit: Optional[str] = None
+) -> Optional[dict]:
+    with _db() as db:
+        row = db.query(InventoryItemModel).filter(
+            InventoryItemModel.id == item_id, InventoryItemModel.user_id == user_id
+        ).first()
+        if not row:
+            return None
+        row.name = name
+        row.quantity = quantity
+        row.unit = _normalize_unit(unit)
+        if low_stock_threshold is not None:
+            row.low_stock_threshold = low_stock_threshold
+        if low_stock_unit is not None:
+            row.low_stock_unit = _normalize_unit(low_stock_unit)
+        return _inventory_row_to_dict(row)
+
+
+def delete_inventory_item(item_id: int, user_id: int) -> bool:
+    with _db() as db:
+        row = db.query(InventoryItemModel).filter(
+            InventoryItemModel.id == item_id, InventoryItemModel.user_id == user_id
+        ).first()
+        if not row:
+            return False
+        db.delete(row)
+        return True
+
+
+# ── Cooking & shopping ─────────────────────────────────────────────────────────
 
 def _compute_recipe_missing(recipe: Recipe, inventory_items: list) -> list:
     missing = []
@@ -336,7 +381,9 @@ def _compute_recipe_missing(recipe: Recipe, inventory_items: list) -> list:
         qty, unit, resolved_name = _parse_ingredient_text(ing.name, ing.amount)
         if qty <= 0 or not resolved_name:
             continue
-        stock_item = next((i for i in inventory_items if _normalize_name(i["name"]) == _normalize_name(resolved_name)), None)
+        stock_item = next(
+            (i for i in inventory_items if _normalize_name(i["name"]) == _normalize_name(resolved_name)), None
+        )
         if not stock_item:
             missing.append({"name": resolved_name, "required": qty, "unit": unit, "available": 0, "recipe": recipe.title})
             continue
@@ -353,18 +400,20 @@ def _compute_recipe_missing(recipe: Recipe, inventory_items: list) -> list:
                 "required": round(max(missing_amount, 0), 2),
                 "unit": unit,
                 "available": stock_item["quantity"],
-                "recipe": recipe.title
+                "recipe": recipe.title,
             })
     return missing
 
 
-def consume_ingredients_for_recipe(recipe_id: int) -> dict:
-    recipe = get_recipe(recipe_id)
+def consume_ingredients_for_recipe(recipe_id: int, user_id: int) -> dict:
+    recipe = get_recipe(recipe_id, user_id)
     if not recipe:
         return {"success": False, "error": "Receta no encontrada"}
-    inv = _read_inventory()
+
+    inv = list_inventory(user_id)
     missing = []
     consumption_plan = []
+
     for ing in recipe.ingredients:
         qty, unit, resolved_name = _parse_ingredient_text(ing.name, ing.amount)
         if qty <= 0 or not resolved_name:
@@ -382,47 +431,39 @@ def consume_ingredients_for_recipe(recipe_id: int) -> dict:
         if available_base < required_base:
             missing.append({"name": resolved_name, "unit": unit, "required": qty, "available": stock_item["quantity"]})
             continue
-        consumption_plan.append({"item_id": stock_item["id"], "consume_base": required_base})
+        consumption_plan.append({"item_id": stock_item["id"], "consume_base": required_base, "unit": stock_item["unit"]})
+
     if missing:
         return {"success": False, "missing": missing}
-    for plan in consumption_plan:
-        for item in inv:
-            if item["id"] == plan["item_id"]:
-                base_unit, base_qty = _to_base(float(item["quantity"]), item["unit"])
+
+    with _db() as db:
+        for plan in consumption_plan:
+            row = db.query(InventoryItemModel).filter(
+                InventoryItemModel.id == plan["item_id"]
+            ).first()
+            if row:
+                base_unit, base_qty = _to_base(float(row.quantity), row.unit)
                 new_base_qty = round(base_qty - plan["consume_base"], 2)
-                factor = UNIT_TO_BASE[_normalize_unit(item["unit"])][1]
-                item["quantity"] = round(new_base_qty / factor, 2)
-                break
-    _write_inventory(inv)
-    return {"success": True, "inventory": inv}
+                factor = UNIT_TO_BASE[_normalize_unit(row.unit)][1]
+                row.quantity = round(new_base_qty / factor, 2)
+
+    return {"success": True, "inventory": list_inventory(user_id)}
 
 
-def _is_low_stock(item: dict) -> bool:
-    qty = float(item.get("quantity", 0))
-    unit = item.get("unit", "")
-    threshold = float(item.get("low_stock_threshold", 0))
-    threshold_unit = item.get("low_stock_unit", unit)
-    convertible, threshold_base, available_base = _convert_between_units(
-        item.get("name", ""), threshold, threshold_unit, qty, unit
-    )
-    if not convertible:
-        return qty <= threshold and _normalize_unit(unit) == _normalize_unit(threshold_unit)
-    return available_base <= threshold_base
+def list_low_stock_items(user_id: int) -> list:
+    return [i for i in list_inventory(user_id) if _is_low_stock(i)]
 
 
-def list_low_stock_items() -> list:
-    return [i for i in _read_inventory() if _is_low_stock(i)]
-
-
-def get_shopping_list() -> dict:
-    inventory_items = _read_inventory()
-    low_stock = list_low_stock_items()
-    planned_recipes = [Recipe(**r) for r in _read_recipes() if r.get("planned_to_cook")]
+def get_shopping_list(user_id: int) -> dict:
+    inventory_items = list_inventory(user_id)
+    low_stock = [i for i in inventory_items if _is_low_stock(i)]
+    planned_recipes = list_recipes(user_id)
+    planned_recipes = [r for r in planned_recipes if r.planned_to_cook]
     missing_for_planned = []
     for recipe in planned_recipes:
         missing_for_planned.extend(_compute_recipe_missing(recipe, inventory_items))
     return {
         "low_stock": low_stock,
         "planned_recipes": [r.model_dump() for r in planned_recipes],
-        "missing_for_planned": missing_for_planned
+        "missing_for_planned": missing_for_planned,
     }
