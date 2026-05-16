@@ -89,7 +89,7 @@ variable "db_location" {
 variable "db_server_name" {
   description = "Nombre globalmente unico del servidor PostgreSQL Flexible."
   type        = string
-  default     = "recipevault-db-dev"
+  default     = "recipevault-psql-dev"
 }
 
 variable "db_name" {
