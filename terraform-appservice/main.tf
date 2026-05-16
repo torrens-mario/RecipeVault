@@ -26,15 +26,16 @@ locals {
   db_url = "postgresql://${var.db_admin_username}:${random_password.db_password.result}@${azurerm_postgresql_flexible_server.main.fqdn}/${var.db_name}?sslmode=require"
 
   default_app_settings = {
-    SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
-    ENABLE_ORYX_BUILD              = "true"
-    WEBSITES_PORT                  = "8000"
-    PYTHONUNBUFFERED               = "1"
-    AZURE_CLIENT_ID                = azurerm_user_assigned_identity.app.client_id
-    DATABASE_URL                   = local.db_url
-    JWT_SECRET                     = random_password.jwt_secret.result
-    BLOB_ACCOUNT_URL               = "https://${azurerm_storage_account.main.name}.blob.core.windows.net"
-    BLOB_CONTAINER                 = azurerm_storage_container.images.name
+    SCM_DO_BUILD_DURING_DEPLOYMENT        = "true"
+    ENABLE_ORYX_BUILD                     = "true"
+    WEBSITES_PORT                         = "8000"
+    PYTHONUNBUFFERED                      = "1"
+    AZURE_CLIENT_ID                       = azurerm_user_assigned_identity.app.client_id
+    DATABASE_URL                          = local.db_url
+    JWT_SECRET                            = random_password.jwt_secret.result
+    BLOB_ACCOUNT_URL                      = "https://${azurerm_storage_account.main.name}.blob.core.windows.net"
+    BLOB_CONTAINER                        = azurerm_storage_container.images.name
+    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
   }
 }
 
@@ -116,26 +117,27 @@ resource "azurerm_key_vault" "main" {
   tags                      = local.common_tags
 }
 
-resource "azurerm_role_assignment" "deployer_kv_secrets_officer" {
-  scope                = azurerm_key_vault.main.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = var.deployer_principal_id
+
+# ── Log Analytics Workspace ────────────────────────────────────────────────────
+
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "recipevault-law-dev"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  tags                = local.common_tags
 }
 
-resource "azurerm_key_vault_secret" "db_url" {
-  name         = "DATABASE-URL"
-  value        = local.db_url
-  key_vault_id = azurerm_key_vault.main.id
+# ── Application Insights ───────────────────────────────────────────────────────
 
-  depends_on = [azurerm_role_assignment.deployer_kv_secrets_officer]
-}
-
-resource "azurerm_key_vault_secret" "jwt_secret" {
-  name         = "JWT-SECRET"
-  value        = random_password.jwt_secret.result
-  key_vault_id = azurerm_key_vault.main.id
-
-  depends_on = [azurerm_role_assignment.deployer_kv_secrets_officer]
+resource "azurerm_application_insights" "main" {
+  name                = "recipevault-ai-dev"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+  application_type    = "web"
+  tags                = local.common_tags
 }
 
 # ── App Service Plan ───────────────────────────────────────────────────────────

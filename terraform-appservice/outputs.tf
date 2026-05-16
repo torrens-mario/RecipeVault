@@ -37,3 +37,12 @@ output "key_vault_name" {
 output "key_vault_uri" {
   value = azurerm_key_vault.main.vault_uri
 }
+
+output "application_insights_name" {
+  value = azurerm_application_insights.main.name
+}
+
+output "application_insights_instrumentation_key" {
+  value     = azurerm_application_insights.main.instrumentation_key
+  sensitive = true
+}

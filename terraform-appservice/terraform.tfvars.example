@@ -24,9 +24,6 @@ db_sku                = "B_Standard_B1ms"
 # Key Vault (3-24 chars, globalmente unico)
 key_vault_name        = "recipevault-kv-dev"
 
-# Principal ID del Managed Identity de GitHub Actions
-deployer_principal_id = "067f8ef3-a303-4ec0-b459-a25b56463479"
-
 app_settings = {
   ENVIRONMENT = "dev"
 }
