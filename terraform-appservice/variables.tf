@@ -118,8 +118,3 @@ variable "key_vault_name" {
   default     = "recipevault-kv-dev"
 }
 
-variable "deployer_principal_id" {
-  description = "Principal ID del Managed Identity de GitHub Actions (necesita escribir secretos en KV)."
-  type        = string
-  default     = "067f8ef3-a303-4ec0-b459-a25b56463479"
-}

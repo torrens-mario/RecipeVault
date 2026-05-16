@@ -33,8 +33,9 @@ locals {
     AZURE_CLIENT_ID                = azurerm_user_assigned_identity.app.client_id
     DATABASE_URL                   = local.db_url
     JWT_SECRET                     = random_password.jwt_secret.result
-    BLOB_ACCOUNT_URL               = "https://${azurerm_storage_account.main.name}.blob.core.windows.net"
-    BLOB_CONTAINER                 = azurerm_storage_container.images.name
+    BLOB_ACCOUNT_URL                        = "https://${azurerm_storage_account.main.name}.blob.core.windows.net"
+    BLOB_CONTAINER                          = azurerm_storage_container.images.name
+    APPLICATIONINSIGHTS_CONNECTION_STRING   = azurerm_application_insights.main.connection_string
   }
 }
 
@@ -119,7 +120,12 @@ resource "azurerm_key_vault" "main" {
 resource "azurerm_role_assignment" "deployer_kv_secrets_officer" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = var.deployer_principal_id
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "time_sleep" "wait_for_kv_rbac" {
+  depends_on      = [azurerm_role_assignment.deployer_kv_secrets_officer]
+  create_duration = "120s"
 }
 
 resource "azurerm_key_vault_secret" "db_url" {
@@ -127,7 +133,7 @@ resource "azurerm_key_vault_secret" "db_url" {
   value        = local.db_url
   key_vault_id = azurerm_key_vault.main.id
 
-  depends_on = [azurerm_role_assignment.deployer_kv_secrets_officer]
+  depends_on = [time_sleep.wait_for_kv_rbac]
 }
 
 resource "azurerm_key_vault_secret" "jwt_secret" {
@@ -135,7 +141,29 @@ resource "azurerm_key_vault_secret" "jwt_secret" {
   value        = random_password.jwt_secret.result
   key_vault_id = azurerm_key_vault.main.id
 
-  depends_on = [azurerm_role_assignment.deployer_kv_secrets_officer]
+  depends_on = [time_sleep.wait_for_kv_rbac]
+}
+
+# ── Log Analytics Workspace ────────────────────────────────────────────────────
+
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "recipevault-law-dev"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  tags                = local.common_tags
+}
+
+# ── Application Insights ───────────────────────────────────────────────────────
+
+resource "azurerm_application_insights" "main" {
+  name                = "recipevault-ai-dev"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+  application_type    = "web"
+  tags                = local.common_tags
 }
 
 # ── App Service Plan ───────────────────────────────────────────────────────────
