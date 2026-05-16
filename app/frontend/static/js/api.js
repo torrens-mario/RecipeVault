@@ -5,7 +5,13 @@ function _authHeaders(extra = {}) {
 
 async function _fetch(url, opts = {}) {
   const res = await fetch(url, opts);
-  if (res.status === 401) { window.location.href = '/login'; return null; }
+  if (res.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('user_id');
+    window.location.href = '/login';
+    return null;
+  }
   return res;
 }
 
