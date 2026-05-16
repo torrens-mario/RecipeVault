@@ -31,8 +31,8 @@ locals {
     WEBSITES_PORT                  = "8000"
     PYTHONUNBUFFERED               = "1"
     AZURE_CLIENT_ID                = azurerm_user_assigned_identity.app.client_id
-    DATABASE_URL                   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/DATABASE-URL/;ClientId=${azurerm_user_assigned_identity.app.client_id})"
-    JWT_SECRET                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/JWT-SECRET/;ClientId=${azurerm_user_assigned_identity.app.client_id})"
+    DATABASE_URL                   = local.db_url
+    JWT_SECRET                     = random_password.jwt_secret.result
     BLOB_ACCOUNT_URL               = "https://${azurerm_storage_account.main.name}.blob.core.windows.net"
     BLOB_CONTAINER                 = azurerm_storage_container.images.name
   }
