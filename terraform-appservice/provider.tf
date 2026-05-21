@@ -16,7 +16,7 @@ terraform {
     use_oidc             = true
     use_azuread_auth     = true
     tenant_id            = "78f3a279-48c8-4670-9162-a63c451c9fae"
-    client_id            = "181260f1-78e0-453a-b1e0-7c3ac5bab3b7"
+    client_id            = "27e43fdd-83b9-4881-a6ea-4104ca38bd71"
     storage_account_name = "tfstaterecipevault"
     container_name       = "tfstate"
     key                  = "recipevault-appservice-dev.tfstate"
