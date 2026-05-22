@@ -1,9 +1,14 @@
+import logging
 import os
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger(__name__)
 
 if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     from azure.monitor.opentelemetry import configure_azure_monitor
     configure_azure_monitor()
+    logger.info("Azure Monitor configurado")
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -31,7 +36,13 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
 
 @app.on_event("startup")
 def startup():
-    init_db()
+    logger.info("Iniciando RecipeVault...")
+    try:
+        init_db()
+        logger.info("Base de datos inicializada correctamente")
+    except Exception:
+        logger.exception("Error al inicializar la base de datos")
+        raise
 
 
 # ── HTML pages ────────────────────────────────────────────────────────────────
