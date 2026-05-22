@@ -47,9 +47,6 @@ jobs:
             --exclude "recipes.json" \
             --exclude "inventory.json"
 
-      - name: Esperar a que Kudu esté listo
-        run: sleep 90
-
       - name: Desplegar a App Service
         run: |
           for i in {1..3}; do
@@ -58,13 +55,10 @@ jobs:
               --name ${{ env.APP_SERVICE_NAME }} \
               --src-path deploy.zip \
               --type zip \
-              --async true && break
+              --timeout 600 && break
             echo "Intento $i fallido, esperando 60s..."
             sleep 60
           done
-
-      - name: Esperar build de Oryx
-        run: sleep 120
 
       - name: Reiniciar App Service
         run: |
