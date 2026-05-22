@@ -51,10 +51,12 @@ jobs:
 
       - name: Desplegar a App Service
         run: |
-          az webapp deployment source config-zip \
+          az webapp deploy \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.APP_SERVICE_NAME }} \
-            --src deploy.zip
+            --src-path deploy.zip \
+            --type zip \
+            --timeout 600
 
       - name: Reiniciar App Service
         run: |
