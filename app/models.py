@@ -18,6 +18,11 @@ class RecipeBase(BaseModel):
     favorite: bool = False
     image: str = ""
     planned_to_cook: bool = False
+    prep_time: int = 0
+    cook_time: int = 0
+    difficulty: str = "Media"
+    notes: str = ""
+    rating: float = 0
 
 
 class RecipeCreate(RecipeBase):
