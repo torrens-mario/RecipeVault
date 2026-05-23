@@ -26,10 +26,33 @@
       <input name="title" placeholder="Título" required>
       <textarea name="description" placeholder="Descripción"></textarea>
       <input name="category" placeholder="Categoría" value="General">
-      <input name="servings" type="number" value="2" min="1" max="20">
+      <div class="form-row-2">
+        <input name="servings" type="number" value="2" min="1" max="20" placeholder="Raciones">
+        <select name="difficulty">
+          <option value="Fácil">Fácil</option>
+          <option value="Media" selected>Media</option>
+          <option value="Difícil">Difícil</option>
+        </select>
+      </div>
+      <div class="form-row-2">
+        <input name="prep_time" type="number" min="0" placeholder="Preparación (min)">
+        <input name="cook_time" type="number" min="0" placeholder="Cocción (min)">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Valoración</label>
+        <div class="star-input" id="starInput">
+          <span class="star-btn" data-val="1">★</span>
+          <span class="star-btn" data-val="2">★</span>
+          <span class="star-btn" data-val="3">★</span>
+          <span class="star-btn" data-val="4">★</span>
+          <span class="star-btn" data-val="5">★</span>
+        </div>
+        <input type="hidden" name="rating" id="ratingHidden" value="0">
+      </div>
       <textarea name="ingredients" placeholder="Ingredientes, uno por línea. Ej: 4 uds Huevos o 3 cda Pesto"></textarea>
       <textarea name="steps" placeholder="Pasos, uno por línea"></textarea>
       <input name="tags" placeholder="Tags separadas por coma">
+      <textarea name="notes" placeholder="Notas personales (trucos, variaciones, recuerdos...)"></textarea>
       <button type="submit" class="btn primary" id="submitBtn">Guardar receta</button>
     </form>
   </main>

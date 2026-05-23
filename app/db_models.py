@@ -37,6 +37,11 @@ class Recipe(Base):
     favorite = Column(Boolean, default=False)
     planned_to_cook = Column(Boolean, default=False)
     image = Column(String(500), default="")
+    prep_time = Column(Integer, default=0)
+    cook_time = Column(Integer, default=0)
+    difficulty = Column(String(20), default="Media")
+    notes = Column(Text, default="")
+    rating = Column(Float, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User", back_populates="recipes")

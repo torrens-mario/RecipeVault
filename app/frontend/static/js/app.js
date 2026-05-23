@@ -1,6 +1,9 @@
 const grid = document.getElementById('recipes');
 const search = document.getElementById('search');
 const sortSelect = document.getElementById('sortSelect');
+const filterCategory = document.getElementById('filterCategory');
+const filterFavs = document.getElementById('filterFavs');
+const filterPlan = document.getElementById('filterPlan');
 
 function sortRecipes(items) {
   const mode = sortSelect?.value || 'alphabetical';
@@ -9,14 +12,34 @@ function sortRecipes(items) {
   if (mode === 'favorites') sorted.sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.title.localeCompare(b.title, 'es'));
   if (mode === 'ingredients') sorted.sort((a, b) => (b.ingredients?.length || 0) - (a.ingredients?.length || 0));
   if (mode === 'planned') sorted.sort((a, b) => Number(b.planned_to_cook) - Number(a.planned_to_cook) || a.title.localeCompare(b.title, 'es'));
+  if (mode === 'rating') sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0) || a.title.localeCompare(b.title, 'es'));
   return sorted;
+}
+
+function applyFilters(items) {
+  let result = items;
+  const cat = filterCategory?.value || '';
+  const onlyFavs = filterFavs?.dataset.active === 'true';
+  const onlyPlan = filterPlan?.dataset.active === 'true';
+  if (cat) result = result.filter(r => r.category === cat);
+  if (onlyFavs) result = result.filter(r => r.favorite);
+  if (onlyPlan) result = result.filter(r => r.planned_to_cook);
+  return result;
+}
+
+function renderStars(rating) {
+  if (!rating) return '';
+  return [1,2,3,4,5].map(i =>
+    `<span class="star-display ${i <= rating ? 'active' : ''}">★</span>`
+  ).join('');
 }
 
 function renderRecipes(items) {
   if (!grid) return;
-  const sorted = sortRecipes(items);
+  const filtered = applyFilters(items);
+  const sorted = sortRecipes(filtered);
   if (!sorted.length) {
-    grid.innerHTML = '<p class="muted">Todavía no tienes recetas.</p>';
+    grid.innerHTML = '<p class="muted">No hay recetas con estos filtros.</p>';
     return;
   }
   grid.innerHTML = sorted.map(r => `
@@ -27,7 +50,12 @@ function renderRecipes(items) {
           <h3>${r.title}</h3>
           <button class="favorite-btn ${r.favorite ? 'active' : ''}" data-favorite="${r.id}" aria-label="Marcar como favorita">❤</button>
         </div>
-        <p class="muted">${r.category} · ${r.servings} raciones · ${r.ingredients?.length || 0} ingredientes</p>
+        <div class="recipe-card-meta">
+          <span class="muted">${r.category} · ${r.servings} raciones</span>
+          <span class="difficulty-badge difficulty-${r.difficulty === 'Fácil' ? 'facil' : r.difficulty === 'Difícil' ? 'dificil' : 'media'}">${r.difficulty || 'Media'}</span>
+        </div>
+        ${r.rating > 0 ? `<div class="star-row" style="margin-top:4px;">${renderStars(r.rating)}</div>` : ''}
+        ${(r.prep_time > 0 || r.cook_time > 0) ? `<p class="muted time-info">${[r.prep_time > 0 ? '⏱ ' + r.prep_time + ' min' : '', r.cook_time > 0 ? '🍳 ' + r.cook_time + ' min' : ''].filter(Boolean).join(' · ')}</p>` : ''}
         <p>${r.description || ''}</p>
         <div class="card-tags">
           ${(r.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
@@ -43,12 +71,28 @@ function renderRecipes(items) {
     </article>`).join('');
 }
 
+function populateCategoryFilter(items) {
+  if (!filterCategory) return;
+  const cats = [...new Set(items.map(r => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const current = filterCategory.value;
+  filterCategory.innerHTML = '<option value="">Todas las categorías</option>' +
+    cats.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>${c}</option>`).join('');
+}
+
 async function loadRecipes() {
   if (!grid) return;
   const q = search?.value.trim() || '';
   const items = await api.listRecipes(q);
   window.__recipes = items;
+  populateCategoryFilter(items);
   renderRecipes(items);
+}
+
+function toggleFilterBtn(btn) {
+  const active = btn.dataset.active === 'true';
+  btn.dataset.active = active ? 'false' : 'true';
+  btn.classList.toggle('active', !active);
+  renderRecipes(window.__recipes || []);
 }
 
 search?.addEventListener('input', () => {
@@ -57,6 +101,9 @@ search?.addEventListener('input', () => {
 });
 
 sortSelect?.addEventListener('change', () => renderRecipes(window.__recipes || []));
+filterCategory?.addEventListener('change', () => renderRecipes(window.__recipes || []));
+filterFavs?.addEventListener('click', () => toggleFilterBtn(filterFavs));
+filterPlan?.addEventListener('click', () => toggleFilterBtn(filterPlan));
 
 grid?.addEventListener('click', async (e) => {
   const fav = e.target.closest('[data-favorite]');

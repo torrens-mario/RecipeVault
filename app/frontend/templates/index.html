@@ -30,11 +30,19 @@
           <option value="favorites">Favoritas primero</option>
           <option value="ingredients">Más ingredientes</option>
           <option value="planned">Quiero cocinar primero</option>
+          <option value="rating">Mejor valoradas</option>
         </select>
         <a class="btn primary" href="/recipes/new">+ Añadir receta</a>
       </div>
     </section>
     <section>
+      <div class="filter-bar">
+        <select id="filterCategory" class="filter-select">
+          <option value="">Todas las categorías</option>
+        </select>
+        <button id="filterFavs" class="filter-btn" data-active="false">❤ Favoritas</button>
+        <button id="filterPlan" class="filter-btn" data-active="false">📅 Quiero cocinar</button>
+      </div>
       <h2 class="section-title">🍽 <span>Mis recetas</span></h2>
       <div id="recipes" class="grid"></div>
     </section>

@@ -30,6 +30,3 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
-
-deploy.zip
-logs.zip

@@ -5,11 +5,32 @@
   const r = await api.getRecipe(window.RECIPE_ID);
   const shareUrl = `${window.location.origin}/shared/${r.id}`;
 
+  function renderStars(rating) {
+    return [1,2,3,4,5].map(i =>
+      `<span class="star-display ${i <= rating ? 'active' : ''}">★</span>`
+    ).join('');
+  }
+
+  function difficultyClass(d) {
+    if (d === 'Fácil') return 'facil';
+    if (d === 'Difícil') return 'dificil';
+    return 'media';
+  }
+
+  const timeInfo = [];
+  if (r.prep_time > 0) timeInfo.push(`⏱ ${r.prep_time} min prep`);
+  if (r.cook_time > 0) timeInfo.push(`🍳 ${r.cook_time} min cocción`);
+
   container.innerHTML = `
     <article class="card detail-card">
       <img class="detail-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
       <h1 style="font-size:1.5rem;margin-bottom:4px;">${r.title}</h1>
-      <p class="muted">${r.category} · ${r.servings} raciones</p>
+      <div class="detail-meta">
+        <span class="muted">${r.category} · ${r.servings} raciones</span>
+        <span class="difficulty-badge difficulty-${difficultyClass(r.difficulty)}">${r.difficulty || 'Media'}</span>
+        ${r.rating > 0 ? `<span class="star-row">${renderStars(r.rating)}</span>` : ''}
+      </div>
+      ${timeInfo.length ? `<p class="time-info muted">${timeInfo.join(' · ')}</p>` : ''}
       <p style="margin-top:8px;">${r.description || ''}</p>
       <h3 style="margin-top:14px;">Ingredientes</h3>
       <ul style="margin-left:18px;margin-top:6px;">
@@ -19,6 +40,7 @@
       <ol style="margin-left:18px;margin-top:6px;">
         ${r.steps.map(s => `<li>${s}</li>`).join('')}
       </ol>
+      ${r.notes ? `<h3 style="margin-top:14px;">Notas</h3><p style="margin-top:6px;font-style:italic;color:#7a5a46;">${r.notes}</p>` : ''}
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn primary" id="cookBtn">Cocinar (actualizar inventario)</button>
         <button class="btn secondary" id="shareBtn">Copiar enlace para compartir</button>
