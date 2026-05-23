@@ -21,8 +21,8 @@ from database import (
     create_recipe, create_user, delete_inventory_item, delete_recipe,
     get_recipe, get_recipe_public, get_shopping_list, get_user_by_id,
     list_inventory, list_low_stock_items, list_recipes, toggle_favorite,
-    toggle_planned_to_cook, update_inventory_item, update_recipe,
-    update_recipe_image, init_db,
+    toggle_planned_to_cook, toggle_public, update_inventory_item, update_recipe,
+    update_recipe_image, init_db, seed_default_recipes, seed_default_inventory,
 )
 from models import RecipeCreate, RecipeUpdate, UserLogin, UserRegister
 from storage import upload_recipe_image
@@ -98,6 +98,8 @@ def api_register(payload: UserRegister):
     user = create_user(payload.username, payload.email, payload.password)
     if not user:
         raise HTTPException(status_code=400, detail="El usuario o email ya existe")
+    seed_default_recipes(user["id"])
+    seed_default_inventory(user["id"])
     token = create_access_token(user["id"])
     return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "username": user["username"]}
 
@@ -173,6 +175,13 @@ def api_toggle_plan(recipe_id: int, user_id: int = Depends(get_current_user_id))
 def api_delete_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):
     if not delete_recipe(recipe_id, user_id):
         raise HTTPException(status_code=404, detail="Receta no encontrada")
+
+@app.post("/api/recipes/{recipe_id}/public")
+def api_toggle_public(recipe_id: int, user_id: int = Depends(get_current_user_id)):
+    recipe = toggle_public(recipe_id, user_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
+    return recipe.model_dump()
 
 @app.post("/api/recipes/{recipe_id}/cook")
 def api_cook_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):

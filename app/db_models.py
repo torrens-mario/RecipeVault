@@ -36,6 +36,7 @@ class Recipe(Base):
     tags = Column(JSONB, default=list)
     favorite = Column(Boolean, default=False)
     planned_to_cook = Column(Boolean, default=False)
+    is_public = Column(Boolean, default=True)
     image = Column(String(500), default="")
     prep_time = Column(Integer, default=0)
     cook_time = Column(Integer, default=0)
