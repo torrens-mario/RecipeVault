@@ -7,7 +7,7 @@
 
   function renderStars(rating) {
     return [1,2,3,4,5].map(i =>
-      `<span class="star-display ${i <= rating ? 'active' : ''}"">★</span>`
+      `<span class="star-display ${i <= rating ? 'active' : ''}">★</span>`
     ).join('');
   }
 
