@@ -1,7 +1,28 @@
 const form = document.getElementById('recipeForm');
-
-// Determine if we are editing an existing recipe
 const isEditing = typeof window.EDIT_RECIPE_ID !== 'undefined' && window.EDIT_RECIPE_ID;
+
+// ── Star rating ────────────────────────────────────────────────────────────────
+
+function setStars(val) {
+  document.getElementById('ratingHidden').value = val;
+  document.querySelectorAll('.star-btn').forEach(s => {
+    s.classList.toggle('active', Number(s.dataset.val) <= val);
+  });
+}
+
+document.querySelectorAll('.star-btn').forEach(btn => {
+  btn.addEventListener('click', () => setStars(Number(btn.dataset.val)));
+  btn.addEventListener('mouseenter', () => {
+    document.querySelectorAll('.star-btn').forEach(s => {
+      s.classList.toggle('hover', Number(s.dataset.val) <= Number(btn.dataset.val));
+    });
+  });
+  btn.addEventListener('mouseleave', () => {
+    document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('hover'));
+  });
+});
+
+// ── Prefill ────────────────────────────────────────────────────────────────────
 
 async function prefillForm() {
   if (!isEditing) return;
@@ -10,10 +31,17 @@ async function prefillForm() {
   form.elements.description.value = r.description || '';
   form.elements.category.value = r.category || 'General';
   form.elements.servings.value = r.servings || 2;
+  form.elements.difficulty.value = r.difficulty || 'Media';
+  form.elements.prep_time.value = r.prep_time || 0;
+  form.elements.cook_time.value = r.cook_time || 0;
+  form.elements.notes.value = r.notes || '';
   form.elements.ingredients.value = (r.ingredients || []).map(i => `${i.amount} ${i.name}`).join('\n');
   form.elements.steps.value = (r.steps || []).join('\n');
   form.elements.tags.value = (r.tags || []).join(', ');
+  setStars(r.rating || 0);
 }
+
+// ── Submit ─────────────────────────────────────────────────────────────────────
 
 form?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -23,6 +51,11 @@ form?.addEventListener('submit', async (e) => {
     description: String(fd.get('description') || '').trim(),
     category: String(fd.get('category') || 'General').trim(),
     servings: Number(fd.get('servings') || 2),
+    difficulty: String(fd.get('difficulty') || 'Media'),
+    prep_time: Number(fd.get('prep_time') || 0),
+    cook_time: Number(fd.get('cook_time') || 0),
+    rating: Number(fd.get('rating') || 0),
+    notes: String(fd.get('notes') || '').trim(),
     ingredients: String(fd.get('ingredients') || '').split('\n').map(line => line.trim()).filter(Boolean).map(line => {
       const parts = line.split(' ');
       if (parts.length >= 3) return { amount: `${parts[0]} ${parts[1]}`, name: parts.slice(2).join(' ') };
