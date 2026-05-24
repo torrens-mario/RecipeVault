@@ -73,3 +73,19 @@ def new_user(client):
 @pytest.fixture
 def auth_headers(new_user):
     return {"Authorization": f"Bearer {new_user['access_token']}"}
+
+
+@pytest.fixture
+def recipe(client, auth_headers):
+    suffix = uuid.uuid4().hex[:6]
+    r = client.post("/api/recipes", headers=auth_headers, json={
+        "title": f"Tortilla_{suffix}",
+        "description": "Receta de prueba",
+        "category": "Española",
+        "servings": 4,
+        "ingredients": [{"name": "Huevos", "amount": "6 uds"}, {"name": "Patata", "amount": "500 g"}],
+        "steps": ["Fríe las patatas", "Mezcla con huevo y cuaja"],
+        "tags": ["test"],
+    })
+    assert r.status_code == 201
+    return r.json()
