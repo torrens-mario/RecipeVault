@@ -76,6 +76,19 @@ def auth_headers(new_user):
 
 
 @pytest.fixture
+def inventory_item(client, auth_headers):
+    r = client.post("/api/inventory", headers=auth_headers, json={
+        "name": "Harina",
+        "quantity": 500,
+        "unit": "g",
+        "low_stock_threshold": 100,
+        "low_stock_unit": "g",
+    })
+    assert r.status_code == 201
+    return r.json()
+
+
+@pytest.fixture
 def recipe(client, auth_headers):
     suffix = uuid.uuid4().hex[:6]
     r = client.post("/api/recipes", headers=auth_headers, json={
