@@ -43,16 +43,17 @@
       ${r.notes ? `<h3 style="margin-top:14px;">Notas</h3><p style="margin-top:6px;font-style:italic;color:#7a5a46;">${r.notes}</p>` : ''}
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn primary" id="cookBtn">Cocinar (actualizar inventario)</button>
-        <button class="btn secondary" id="shareBtn">Copiar enlace para compartir</button>
         <button class="btn secondary" id="favoriteBtn">${r.favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}</button>
         <button class="btn ${r.planned_to_cook ? 'secondary' : 'primary'}" id="planBtn">
           ${r.planned_to_cook ? 'Quitar de quiero cocinar' : 'Quiero cocinarla'}
         </button>
+        <button class="btn secondary" id="publicBtn">${r.is_public ? '🔓 Hacer privada' : '🔒 Hacer pública'}</button>
+        ${r.is_public ? `<button class="btn secondary" id="shareBtn">Copiar enlace</button>` : ''}
         <a class="btn secondary" href="/recipes/${r.id}/edit">Editar receta</a>
         <button class="btn secondary" id="deleteBtn" style="color:#c9435b;border-color:#f2bbc4;">Eliminar receta</button>
       </div>
       <div id="cookResult" class="muted" style="margin-top:10px;"></div>
-      <div class="muted" style="margin-top:6px;word-break:break-all;">Enlace compartible: ${shareUrl}</div>
+      ${r.is_public ? `<div class="muted" style="margin-top:6px;word-break:break-all;">Enlace compartible: ${shareUrl}</div>` : '<div class="muted" style="margin-top:6px;">🔒 Esta receta es privada. Solo tú puedes verla.</div>'}
     </article>`;
 
   document.getElementById('shareBtn')?.addEventListener('click', async () => {
@@ -62,6 +63,11 @@
     } catch (e) {
       alert('No se pudo copiar el enlace. URL: ' + shareUrl);
     }
+  });
+
+  document.getElementById('publicBtn')?.addEventListener('click', async () => {
+    await api.togglePublic(r.id);
+    location.reload();
   });
 
   document.getElementById('favoriteBtn')?.addEventListener('click', async () => {

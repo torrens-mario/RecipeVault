@@ -110,5 +110,10 @@ const api = {
   async cookRecipe(id) {
     const res = await _fetch(`/api/recipes/${id}/cook`, { method: 'POST', headers: _authHeaders() });
     return res ? res.json() : null;
+  },
+
+  async togglePublic(id) {
+    const res = await _fetch(`/api/recipes/${id}/public`, { method: 'POST', headers: _authHeaders() });
+    return res ? res.json() : null;
   }
 };

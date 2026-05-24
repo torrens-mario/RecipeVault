@@ -23,43 +23,79 @@
         <h1>Inventario de ingredientes</h1>
         <p class="muted">Controla qué tienes en la despensa y cuánto te queda.</p>
       </div>
-      <form id="inventoryForm" class="inventory-form">
-        <input name="name" placeholder="Ingrediente" required>
-        <input name="quantity" type="number" step="0.1" min="0" placeholder="Cantidad" required>
-        <select name="unit" required>
-          <option value="g">g</option><option value="kg">kg</option>
-          <option value="ml">ml</option><option value="l">l</option>
-          <option value="cda">cda</option><option value="cdita">cdita</option>
-          <option value="uds">uds</option>
-        </select>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <select name="low_stock_threshold" required>
-            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-            <option value="5" selected>5</option><option value="10">10</option>
-            <option value="15">15</option><option value="20">20</option>
-            <option value="25">25</option><option value="50">50</option><option value="100">100</option>
-          </select>
-          <select name="low_stock_unit" required>
-            <option value="g">g</option><option value="kg">kg</option>
-            <option value="ml">ml</option><option value="l">l</option>
-            <option value="cda">cda</option><option value="cdita">cdita</option>
-            <option value="uds">uds</option>
-          </select>
-        </div>
-        <button type="submit" class="btn primary">+ Añadir</button>
-      </form>
+      <button class="btn primary" id="openAddModal">+ Añadir ingrediente</button>
     </section>
+
+    <div class="inv-toolbar">
+      <input id="invSearch" type="search" placeholder="Buscar ingrediente..." class="inv-search">
+      <span class="muted" id="invCount"></span>
+    </div>
+
     <section>
       <table class="inventory-table">
         <thead>
           <tr>
-            <th>Ingrediente</th><th>Cantidad</th><th>Unidad</th><th>Aviso mínimo</th><th></th>
+            <th>Ingrediente</th>
+            <th>Cantidad</th>
+            <th>Aviso mínimo</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="inventoryBody"></tbody>
       </table>
+      <p class="muted" id="invEmpty" style="display:none;margin-top:12px;">No hay ingredientes que coincidan.</p>
     </section>
   </main>
+
+  <!-- Add Modal -->
+  <div id="addModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="addModalTitle">Añadir ingrediente</div>
+          <p class="muted">Añade un ingrediente a tu despensa.</p>
+        </div>
+        <button type="button" class="modal-close" id="closeAddModal" aria-label="Cerrar">✕</button>
+      </div>
+      <form id="inventoryForm">
+        <div class="modal-grid">
+          <div class="field">
+            <label for="addName">Ingrediente</label>
+            <input id="addName" name="name" placeholder="Ej: Harina" required>
+          </div>
+          <div class="field">
+            <label for="addQuantity">Cantidad</label>
+            <input id="addQuantity" name="quantity" type="number" step="0.1" min="0" placeholder="500" required>
+          </div>
+          <div class="field">
+            <label for="addUnit">Unidad</label>
+            <select id="addUnit" name="unit" required>
+              <option value="g">g</option><option value="kg">kg</option>
+              <option value="ml">ml</option><option value="l">l</option>
+              <option value="cda">cda</option><option value="cdita">cdita</option>
+              <option value="uds">uds</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Aviso mínimo</label>
+            <div class="unit-row">
+              <input name="low_stock_threshold" type="number" step="0.1" min="0" value="5" required>
+              <select name="low_stock_unit" required>
+                <option value="g">g</option><option value="kg">kg</option>
+                <option value="ml">ml</option><option value="l">l</option>
+                <option value="cda">cda</option><option value="cdita">cdita</option>
+                <option value="uds">uds</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top:16px;">
+          <button type="button" class="btn secondary" id="cancelAddModal">Cancelar</button>
+          <button type="submit" class="btn primary">Añadir</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Edit Modal -->
   <div id="editModal" class="modal-backdrop" aria-hidden="true">
@@ -67,7 +103,7 @@
       <div class="modal-header">
         <div>
           <div class="modal-title" id="editModalTitle">Editar ingrediente</div>
-          <p class="muted">Actualiza la cantidad, unidad y aviso mínimo del ingrediente.</p>
+          <p class="muted">Actualiza la cantidad y el aviso mínimo.</p>
         </div>
         <button type="button" class="modal-close" id="closeEditModal" aria-label="Cerrar">✕</button>
       </div>
@@ -92,14 +128,9 @@
             </select>
           </div>
           <div class="field">
-            <label for="editThreshold">Aviso mínimo</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <select id="editThreshold" name="low_stock_threshold" required>
-                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                <option value="5">5</option><option value="10">10</option><option value="15">15</option>
-                <option value="20">20</option><option value="25">25</option>
-                <option value="50">50</option><option value="100">100</option>
-              </select>
+            <label>Aviso mínimo</label>
+            <div class="unit-row">
+              <input id="editThreshold" name="low_stock_threshold" type="number" step="0.1" min="0" required>
               <select id="editThresholdUnit" name="low_stock_unit" required>
                 <option value="g">g</option><option value="kg">kg</option>
                 <option value="ml">ml</option><option value="l">l</option>
