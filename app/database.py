@@ -197,6 +197,7 @@ def _recipe_row_to_model(row: RecipeModel) -> Recipe:
         tags=row.tags or [],
         favorite=row.favorite or False,
         planned_to_cook=row.planned_to_cook or False,
+        is_public=row.is_public if row.is_public is not None else True,
         image=row.image or "",
         prep_time=row.prep_time or 0,
         cook_time=row.cook_time or 0,
@@ -270,8 +271,23 @@ def list_recipes(user_id: int, q: Optional[str] = None):
 
 def get_recipe_public(recipe_id: int) -> Optional[Recipe]:
     with _db() as db:
-        row = db.query(RecipeModel).filter(RecipeModel.id == recipe_id).first()
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id,
+            RecipeModel.is_public.is_(True),
+        ).first()
         return _recipe_row_to_model(row) if row else None
+
+
+def toggle_public(recipe_id: int, user_id: int) -> Optional[Recipe]:
+    with _db() as db:
+        row = db.query(RecipeModel).filter(
+            RecipeModel.id == recipe_id, RecipeModel.user_id == user_id
+        ).first()
+        if not row:
+            return None
+        current = row.is_public if row.is_public is not None else True
+        row.is_public = not current
+        return _recipe_row_to_model(row)
 
 
 def get_recipe(recipe_id: int, user_id: int) -> Optional[Recipe]:
@@ -303,7 +319,9 @@ def update_recipe(recipe_id: int, payload: RecipeUpdate, user_id: int) -> Option
             return None
         data = payload.model_dump()
         for field, value in data.items():
-            if value is not None or field in ("favorite", "planned_to_cook"):
+            if field == "image":
+                continue
+            if value is not None or field in ("favorite", "planned_to_cook", "is_public"):
                 setattr(row, field, value)
         if not row.image:
             row.image = _pick_recipe_image(row.title or "", row.category or "", row.ingredients or [])
@@ -352,6 +370,192 @@ def delete_recipe(recipe_id: int, user_id: int) -> bool:
             return False
         db.delete(row)
         return True
+
+
+# ── Seed data ─────────────────────────────────────────────────────────────────
+
+_DEFAULT_RECIPES = [
+    {
+        "title": "Tortilla española",
+        "description": "La clásica tortilla de patatas, jugosa por dentro y dorada por fuera.",
+        "category": "Española",
+        "servings": 4,
+        "prep_time": 15,
+        "cook_time": 25,
+        "difficulty": "Media",
+        "rating": 5.0,
+        "favorite": True,
+        "planned_to_cook": False,
+        "tags": ["española", "clásica", "huevo"],
+        "notes": "El truco está en dejarla jugosa por dentro. Usa bastante aceite para freír las patatas.",
+        "ingredients": [
+            {"name": "Huevos", "amount": "6 uds"},
+            {"name": "Patata", "amount": "500 g"},
+            {"name": "Cebolla", "amount": "1 uds"},
+            {"name": "Aceite de oliva", "amount": "100 ml"},
+            {"name": "Sal", "amount": "1 cdita"},
+        ],
+        "steps": [
+            "Pela y corta las patatas en láminas finas. Pica la cebolla.",
+            "Fríe las patatas y la cebolla en aceite a fuego medio durante 20 minutos.",
+            "Escurre el aceite. Bate los huevos con sal y mezcla con las patatas.",
+            "Cuaja la tortilla en una sartén con un poco de aceite a fuego medio.",
+            "Dale la vuelta con un plato y cocina 2-3 minutos más.",
+        ],
+    },
+    {
+        "title": "Pasta carbonara",
+        "description": "Pasta cremosa con panceta, huevo y queso parmesano. Sin nata, como en Roma.",
+        "category": "Italiana",
+        "servings": 2,
+        "prep_time": 5,
+        "cook_time": 20,
+        "difficulty": "Media",
+        "rating": 5.0,
+        "favorite": True,
+        "planned_to_cook": False,
+        "tags": ["pasta", "italiana", "rápida"],
+        "notes": "Lo más importante: mezclar fuera del fuego para que el huevo no se cuaje.",
+        "ingredients": [
+            {"name": "Pasta", "amount": "200 g"},
+            {"name": "Panceta", "amount": "100 g"},
+            {"name": "Huevos", "amount": "2 uds"},
+            {"name": "Queso parmesano", "amount": "50 g"},
+            {"name": "Pimienta negra", "amount": "1 cdita"},
+            {"name": "Sal", "amount": "1 cdita"},
+        ],
+        "steps": [
+            "Cuece la pasta en agua con sal hasta que esté al dente.",
+            "Fríe la panceta en una sartén sin aceite hasta que quede crujiente.",
+            "Mezcla los huevos con el queso rallado y la pimienta en un bol.",
+            "Escurre la pasta (guarda un poco del agua). Apaga el fuego y mezcla con la panceta.",
+            "Añade la mezcla de huevo y remueve rápido. Usa el agua de la pasta para ajustar la cremosidad.",
+        ],
+    },
+    {
+        "title": "Pollo al horno con patatas",
+        "description": "Pollo jugoso con patatas doradas al horno, con ajo y romero.",
+        "category": "Carnes",
+        "servings": 4,
+        "prep_time": 15,
+        "cook_time": 60,
+        "difficulty": "Fácil",
+        "rating": 4.0,
+        "favorite": False,
+        "planned_to_cook": True,
+        "tags": ["pollo", "horno", "familiar"],
+        "notes": "",
+        "ingredients": [
+            {"name": "Pollo", "amount": "1 uds"},
+            {"name": "Patata", "amount": "800 g"},
+            {"name": "Ajo", "amount": "4 uds"},
+            {"name": "Aceite de oliva", "amount": "3 cda"},
+            {"name": "Sal", "amount": "1 cdita"},
+            {"name": "Romero", "amount": "2 cdita"},
+        ],
+        "steps": [
+            "Precalienta el horno a 200°C.",
+            "Trocea el pollo y corta las patatas en gajos. Colócalos en una bandeja.",
+            "Aliña con aceite, ajo machacado, sal y romero. Mezcla bien.",
+            "Hornea 60 minutos, dando la vuelta a mitad de cocción.",
+        ],
+    },
+    {
+        "title": "Gazpacho andaluz",
+        "description": "Sopa fría de tomate perfecta para el verano. Refrescante y muy saludable.",
+        "category": "Sopas",
+        "servings": 4,
+        "prep_time": 15,
+        "cook_time": 0,
+        "difficulty": "Fácil",
+        "rating": 4.0,
+        "favorite": False,
+        "planned_to_cook": False,
+        "tags": ["gazpacho", "frío", "verano", "vegetariano"],
+        "notes": "Mejor prepararlo de un día para otro para que los sabores se integren.",
+        "ingredients": [
+            {"name": "Tomate", "amount": "1 kg"},
+            {"name": "Pepino", "amount": "1 uds"},
+            {"name": "Pimiento verde", "amount": "1 uds"},
+            {"name": "Ajo", "amount": "1 uds"},
+            {"name": "Aceite de oliva", "amount": "3 cda"},
+            {"name": "Vinagre", "amount": "1 cda"},
+            {"name": "Sal", "amount": "1 cdita"},
+            {"name": "Pan", "amount": "50 g"},
+        ],
+        "steps": [
+            "Trocea todos los ingredientes y ponlos en el vaso de la batidora.",
+            "Añade el pan remojado en agua, aceite, vinagre y sal.",
+            "Bate todo hasta obtener una textura suave. Cuela si quieres más fino.",
+            "Enfría en la nevera al menos 1 hora antes de servir.",
+        ],
+    },
+    {
+        "title": "Ensalada César",
+        "description": "La ensalada más famosa del mundo, con lechuga romana, picatostes y aderezo César.",
+        "category": "Ensaladas",
+        "servings": 2,
+        "prep_time": 15,
+        "cook_time": 5,
+        "difficulty": "Fácil",
+        "rating": 4.0,
+        "favorite": False,
+        "planned_to_cook": False,
+        "tags": ["ensalada", "ligera"],
+        "notes": "Para la salsa auténtica, añade anchoas y mostaza de Dijon.",
+        "ingredients": [
+            {"name": "Lechuga romana", "amount": "1 uds"},
+            {"name": "Pan", "amount": "2 uds"},
+            {"name": "Queso parmesano", "amount": "30 g"},
+            {"name": "Aceite de oliva", "amount": "2 cda"},
+            {"name": "Limón", "amount": "1 uds"},
+            {"name": "Ajo", "amount": "1 uds"},
+        ],
+        "steps": [
+            "Corta el pan en dados y tuéstalos con aceite y ajo en la sartén hasta que queden crujientes.",
+            "Lava y trocea la lechuga en trozos grandes.",
+            "Prepara el aderezo mezclando aceite, zumo de limón, ajo y sal.",
+            "Mezcla todo en un bol grande y añade el queso rallado por encima.",
+        ],
+    },
+]
+
+_DEFAULT_INVENTORY = [
+    {"name": "Aceite de oliva", "quantity": 750, "unit": "ml", "low_stock_threshold": 200, "low_stock_unit": "ml"},
+    {"name": "Sal", "quantity": 500, "unit": "g", "low_stock_threshold": 100, "low_stock_unit": "g"},
+    {"name": "Huevos", "quantity": 6, "unit": "uds", "low_stock_threshold": 2, "low_stock_unit": "uds"},
+    {"name": "Leche", "quantity": 1000, "unit": "ml", "low_stock_threshold": 500, "low_stock_unit": "ml"},
+    {"name": "Harina", "quantity": 1000, "unit": "g", "low_stock_threshold": 200, "low_stock_unit": "g"},
+    {"name": "Azúcar", "quantity": 500, "unit": "g", "low_stock_threshold": 100, "low_stock_unit": "g"},
+    {"name": "Pasta", "quantity": 500, "unit": "g", "low_stock_threshold": 100, "low_stock_unit": "g"},
+    {"name": "Arroz", "quantity": 1000, "unit": "g", "low_stock_threshold": 200, "low_stock_unit": "g"},
+    {"name": "Patata", "quantity": 1000, "unit": "g", "low_stock_threshold": 300, "low_stock_unit": "g"},
+    {"name": "Cebolla", "quantity": 3, "unit": "uds", "low_stock_threshold": 1, "low_stock_unit": "uds"},
+    {"name": "Ajo", "quantity": 2, "unit": "uds", "low_stock_threshold": 1, "low_stock_unit": "uds"},
+    {"name": "Tomate", "quantity": 4, "unit": "uds", "low_stock_threshold": 1, "low_stock_unit": "uds"},
+    {"name": "Zanahoria", "quantity": 3, "unit": "uds", "low_stock_threshold": 1, "low_stock_unit": "uds"},
+    {"name": "Mantequilla", "quantity": 200, "unit": "g", "low_stock_threshold": 50, "low_stock_unit": "g"},
+    {"name": "Queso", "quantity": 200, "unit": "g", "low_stock_threshold": 50, "low_stock_unit": "g"},
+]
+
+
+def seed_default_recipes(user_id: int):
+    with _db() as db:
+        if db.query(RecipeModel).filter(RecipeModel.user_id == user_id).first():
+            return
+        for data in _DEFAULT_RECIPES:
+            image = _pick_recipe_image(data.get("title", ""), data.get("category", ""), data.get("ingredients", []))
+            row = RecipeModel(user_id=user_id, image=image, **data)
+            db.add(row)
+
+
+def seed_default_inventory(user_id: int):
+    with _db() as db:
+        if db.query(InventoryItemModel).filter(InventoryItemModel.user_id == user_id).first():
+            return
+        for data in _DEFAULT_INVENTORY:
+            row = InventoryItemModel(user_id=user_id, **data)
+            db.add(row)
 
 
 # ── Inventory CRUD ─────────────────────────────────────────────────────────────

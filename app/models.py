@@ -35,6 +35,7 @@ class RecipeUpdate(RecipeBase):
 
 class Recipe(RecipeBase):
     id: int
+    is_public: bool = True
 
 
 # ── Auth ───────────────────────────────────────────────────────────────────────

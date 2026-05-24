@@ -47,7 +47,7 @@ function renderRecipes(items) {
       <img class="recipe-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
       <div class="recipe-card-body">
         <div class="recipe-card-head">
-          <h3>${r.title}</h3>
+          <h3>${r.title} ${r.is_public === false ? '<span class="private-badge" title="Receta privada">🔒</span>' : ''}</h3>
           <button class="favorite-btn ${r.favorite ? 'active' : ''}" data-favorite="${r.id}" aria-label="Marcar como favorita">❤</button>
         </div>
         <div class="recipe-card-meta">
