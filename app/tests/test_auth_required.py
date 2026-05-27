@@ -23,6 +23,7 @@ PROTECTED_POST = [
 ]
 
 PROTECTED_PUT = [
+    "/api/recipes/1",
     "/api/inventory/1",
 ]
 
@@ -60,3 +61,11 @@ def test_token_invalido_devuelve_401(client):
     for url in PROTECTED_POST:
         r = client.post(url, json={}, headers=headers)
         assert r.status_code == 401, f"POST {url} debería devolver 401 con token inválido, devolvió {r.status_code}"
+
+    for url in PROTECTED_PUT:
+        r = client.put(url, json={}, headers=headers)
+        assert r.status_code == 401, f"PUT {url} debería devolver 401 con token inválido, devolvió {r.status_code}"
+
+    for url in PROTECTED_DELETE:
+        r = client.delete(url, headers=headers)
+        assert r.status_code == 401, f"DELETE {url} debería devolver 401 con token inválido, devolvió {r.status_code}"

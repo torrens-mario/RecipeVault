@@ -26,7 +26,7 @@ class Recipe(Base):
     __tablename__ = "recipes"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, default="")
     category = Column(String(50), default="")
@@ -52,7 +52,7 @@ class InventoryItem(Base):
     __tablename__ = "inventory_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String(100), nullable=False)
     quantity = Column(Float, default=0)
     unit = Column(String(20), default="")

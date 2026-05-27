@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import List
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Annotated, List
 
 
 class Ingredient(BaseModel):
@@ -12,9 +12,9 @@ class RecipeBase(BaseModel):
     description: str = Field(default="", max_length=5000)
     category: str = Field(default="General", max_length=50)
     servings: int = Field(default=2, ge=1, le=100)
-    ingredients: List[Ingredient] = Field(default_factory=list)
-    steps: List[str] = Field(default_factory=list)
-    tags: List[str] = Field(default_factory=list)
+    ingredients: List[Ingredient] = Field(default_factory=list, max_length=100)
+    steps: List[Annotated[str, Field(max_length=2000)]] = Field(default_factory=list, max_length=100)
+    tags: List[Annotated[str, Field(max_length=50)]] = Field(default_factory=list, max_length=50)
     favorite: bool = False
     image: str = Field(default="", max_length=500)
     planned_to_cook: bool = False
@@ -23,6 +23,13 @@ class RecipeBase(BaseModel):
     difficulty: str = Field(default="Media", max_length=20)
     notes: str = Field(default="", max_length=5000)
     rating: float = Field(default=0, ge=0, le=5)
+
+    @field_validator('difficulty')
+    @classmethod
+    def validate_difficulty(cls, v):
+        if v not in ('Fácil', 'Media', 'Difícil'):
+            raise ValueError('La dificultad debe ser Fácil, Media o Difícil')
+        return v
 
 
 class RecipeCreate(RecipeBase):

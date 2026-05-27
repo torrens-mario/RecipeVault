@@ -35,7 +35,7 @@
       <textarea name="ingredients" placeholder="Ingredientes, uno por línea. Ej: 4 uds Huevos o 3 cda Pesto"></textarea>
       <textarea name="steps" placeholder="Pasos, uno por línea"></textarea>
       <input name="tags" placeholder="Tags separadas por coma">
-      <textarea name="notes" placeholder="Notas personales (trucos, variaciones, recuerdos...)"></textarea>
+      <textarea name="notes" maxlength="5000" placeholder="Notas personales (trucos, variaciones, recuerdos...)"></textarea>
       <button type="submit" class="btn primary" id="submitBtn">Guardar receta</button>
     </form>
 {% endblock %}

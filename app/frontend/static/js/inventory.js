@@ -50,8 +50,9 @@ editModal?.addEventListener('click', (e) => { if (e.target === editModal) closeE
 
 // ── Low stock panel ────────────────────────────────────────────────────────────
 
-async function renderLowStock() {
-  const list = await api.lowStockItems();
+let _lowStockIds = new Set();
+
+function renderLowStockItems(list) {
   let panel = document.getElementById('lowStockPanel');
   if (!panel) {
     panel = document.createElement('div');
@@ -71,7 +72,7 @@ async function renderLowStock() {
 // ── Render table ───────────────────────────────────────────────────────────────
 
 function isLow(item) {
-  return item.quantity <= (item.low_stock_threshold || 0);
+  return _lowStockIds.has(item.id);
 }
 
 function renderTable(items) {
@@ -111,10 +112,11 @@ function renderTable(items) {
 
 async function loadInventory() {
   if (!tbody) return;
-  const items = await api.listInventory();
+  const [items, lowStock] = await Promise.all([api.listInventory(), api.lowStockItems()]);
+  _lowStockIds = new Set(lowStock.map(i => i.id));
   window.__inventoryItems = items;
   renderTable(items);
-  renderLowStock();
+  renderLowStockItems(lowStock);
 }
 
 // ── Events ─────────────────────────────────────────────────────────────────────

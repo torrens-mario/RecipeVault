@@ -75,7 +75,7 @@
       await navigator.clipboard.writeText(shareUrl);
       showToast('Enlace copiado al portapapeles');
     } catch (e) {
-      alert('No se pudo copiar el enlace. URL: ' + shareUrl);
+      showToast('No se pudo copiar el enlace: ' + shareUrl);
     }
   });
 

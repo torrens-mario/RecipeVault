@@ -185,7 +185,11 @@ def _is_low_stock(item: dict) -> bool:
     return available_base <= threshold_base
 
 
+_VALID_DIFFICULTIES = {"Fácil", "Media", "Difícil"}
+
+
 def _recipe_row_to_model(row: RecipeModel) -> Recipe:
+    difficulty = row.difficulty if row.difficulty in _VALID_DIFFICULTIES else "Media"
     return Recipe(
         id=row.id,
         title=row.title,
@@ -201,7 +205,7 @@ def _recipe_row_to_model(row: RecipeModel) -> Recipe:
         image=row.image or "",
         prep_time=row.prep_time or 0,
         cook_time=row.cook_time or 0,
-        difficulty=row.difficulty or "Media",
+        difficulty=difficulty,
         notes=row.notes or "",
         rating=row.rating or 0,
     )

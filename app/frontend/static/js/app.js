@@ -47,7 +47,7 @@ function renderRecipes(items) {
   }
   grid.innerHTML = sorted.map(r => `
     <article class="card recipe-card">
-      <img class="recipe-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">
+      ${r.image ? `<img class="recipe-photo" src="${esc(r.image)}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">` : ''}
       <div class="recipe-card-body">
         <div class="recipe-card-head">
           <h3>${esc(r.title)} ${r.is_public === false ? '<span class="private-badge" title="Receta privada">🔒</span>' : ''}</h3>
@@ -85,7 +85,13 @@ function populateCategoryFilter(items) {
 async function loadRecipes() {
   if (!grid) return;
   const q = search?.value.trim() || '';
-  const items = await api.listRecipes(q);
+  let items;
+  try {
+    items = await api.listRecipes(q);
+  } catch {
+    grid.innerHTML = '<p class="muted">Error al cargar las recetas. Comprueba tu conexión.</p>';
+    return;
+  }
   window.__recipes = items;
   populateCategoryFilter(items);
   renderRecipes(items);

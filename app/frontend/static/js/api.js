@@ -19,7 +19,8 @@ const api = {
   async listRecipes(q = '') {
     const url = q ? `/api/recipes?q=${encodeURIComponent(q)}` : '/api/recipes';
     const res = await _fetch(url, { headers: _authHeaders() });
-    if (!res || !res.ok) return [];
+    if (!res) return [];
+    if (!res.ok) throw new Error('Error al cargar las recetas');
     return res.json();
   },
 

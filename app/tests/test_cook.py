@@ -81,3 +81,22 @@ def test_cocinar_no_descuenta_si_falta_alguno(client, auth_headers):
     inventario = client.get("/api/inventory", headers=auth_headers).json()
     almid = next(i for i in inventario if i["id"] == item["id"])
     assert almid["quantity"] == 500
+
+
+def test_cocinar_receta_inexistente_devuelve_404(client, auth_headers):
+    r = client.post("/api/recipes/999999/cook", headers=auth_headers)
+    assert r.status_code == 404
+
+
+def test_cocinar_convierte_unidades(client, auth_headers):
+    """1500 g en inventario, receta necesita 1 kg → debe quedar 500 g."""
+    _crear_item(client, auth_headers, "Lentejas rojas", 1500, "g")
+    receta = _crear_receta(client, auth_headers, [{"name": "Lentejas rojas", "amount": "1 kg"}])
+
+    r = client.post(f"/api/recipes/{receta['id']}/cook", headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["success"] is True
+
+    item = next(i for i in data["inventory"] if i["name"] == "Lentejas rojas")
+    assert item["quantity"] == 500

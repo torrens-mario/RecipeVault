@@ -29,19 +29,6 @@ def _check_magic_bytes(data: bytes) -> None:
 
 
 def validate_and_sanitize_image(data: bytes) -> bytes:
-    """
-    Valida y re-codifica una imagen a JPEG limpio.
-
-    Capas de seguridad:
-    1. Límite de tamaño (5 MB)
-    2. Bytes mágicos — verifica la firma real del archivo, no el Content-Type del cliente
-    3. Re-codificación con Pillow — fuerza la decodificación completa, elimina todos los
-       metadatos (EXIF, ICC, comentarios) y previene archivos políglotas (p. ej. un script
-       Python que también sea un JPEG válido)
-    4. Límite de megapíxeles — previene ataques de descompresión
-
-    Devuelve bytes JPEG limpios. Lanza ValueError si el archivo no es válido.
-    """
     if len(data) > _MAX_BYTES:
         raise ValueError("La imagen es demasiado grande (máximo 5 MB)")
 

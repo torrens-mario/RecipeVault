@@ -166,6 +166,8 @@ def api_me(user_id: int = Depends(get_current_user_id)):
 
 @app.get("/api/recipes")
 def api_list_recipes(q: str | None = None, user_id: int = Depends(get_current_user_id)):
+    if q:
+        q = q[:200]
     return [r.model_dump() for r in list_recipes(user_id=user_id, q=q)]
 
 @app.get("/api/recipes/{recipe_id}")
@@ -197,7 +199,7 @@ async def api_upload_recipe_image(
     recipe = get_recipe(recipe_id, user_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
-    data = await file.read()
+    data = await file.read(5 * 1024 * 1024 + 1)
     try:
         clean_data = validate_and_sanitize_image(data)
     except ValueError as e:
@@ -240,6 +242,8 @@ def api_toggle_public(recipe_id: int, user_id: int = Depends(get_current_user_id
 
 @app.post("/api/recipes/{recipe_id}/cook")
 def api_cook_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):
+    if not get_recipe(recipe_id, user_id):
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
     result = consume_ingredients_for_recipe(recipe_id, user_id)
     if not result.get("success"):
         logger.warning("Cocinar receta id=%s fallido (user=%s): ingredientes insuficientes", recipe_id, user_id)
@@ -270,7 +274,7 @@ def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_
     quantity = _parse_qty(payload.get("quantity", 0))
     threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit or len(name) > 100:
+    if not name or not unit or len(name) > 100 or len(unit) > 20:
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = create_inventory_item(
         user_id=user_id, name=name, quantity=quantity, unit=unit,
@@ -286,7 +290,7 @@ def api_update_inventory_item(item_id: int, payload: dict, user_id: int = Depend
     quantity = _parse_qty(payload.get("quantity", 0))
     threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit or len(name) > 100:
+    if not name or not unit or len(name) > 100 or len(unit) > 20:
         logger.warning("Datos de inventario no válidos — user=%s payload=%s", user_id, payload)
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = update_inventory_item(
