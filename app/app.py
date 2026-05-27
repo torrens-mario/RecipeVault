@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 # Debe ir antes de importar cualquier módulo de Azure
@@ -47,14 +48,10 @@ def _parse_qty(value, default: float = 0.0) -> float:
 
 
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="RecipeVault")
-
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend" / "static")), name="static")
-templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
 
 
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     logger.info("=" * 60)
     logger.info("RecipeVault arrancando")
     logger.info("=" * 60)
@@ -70,6 +67,13 @@ def startup():
         logger.error("Error crítico al inicializar la base de datos — la app no puede arrancar")
         logger.exception("Detalle del error:")
         raise
+    yield
+
+
+app = FastAPI(title="RecipeVault", lifespan=lifespan)
+
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend" / "static")), name="static")
+templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
 
 
 # ── HTML pages ────────────────────────────────────────────────────────────────
