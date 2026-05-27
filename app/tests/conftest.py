@@ -79,7 +79,7 @@ def auth_headers(new_user):
 @pytest.fixture
 def inventory_item(client, auth_headers):
     r = client.post("/api/inventory", headers=auth_headers, json={
-        "name": "Harina",
+        "name": "Aceite de coco",
         "quantity": 500,
         "unit": "g",
         "low_stock_threshold": 100,

@@ -35,7 +35,7 @@
   planned.innerHTML = data.planned_recipes.length
     ? data.planned_recipes.map(r => `
         <div class="shopping-item shopping-item-rich">
-          <img class="shopping-thumb" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="240" height="160">
+          <img class="shopping-thumb" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="240" height="160" onerror="this.onerror=null;this.style.display='none'">
           <div>
             <strong>${esc(r.title)}</strong>
             <span class="muted">${r.ingredients.length} ingredientes · ${r.servings} raciones</span>

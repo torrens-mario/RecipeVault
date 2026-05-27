@@ -47,9 +47,6 @@ function closeEditModal() {
 document.getElementById('closeEditModal')?.addEventListener('click', closeEditModal);
 document.getElementById('cancelEditModal')?.addEventListener('click', closeEditModal);
 editModal?.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); }
-});
 
 // ── Low stock panel ────────────────────────────────────────────────────────────
 
@@ -179,17 +176,44 @@ editForm?.addEventListener('submit', async (e) => {
   }
 });
 
+const deleteItemModal = document.getElementById('confirmDeleteItemModal');
+let _pendingDeleteId = null;
+
+function openConfirmDeleteItem(id) {
+  _pendingDeleteId = id;
+  deleteItemModal.classList.add('open');
+  deleteItemModal.setAttribute('aria-hidden', 'false');
+}
+function closeConfirmDeleteItem() {
+  _pendingDeleteId = null;
+  deleteItemModal.classList.remove('open');
+  deleteItemModal.setAttribute('aria-hidden', 'true');
+}
+
+document.getElementById('confirmDeleteItemClose')?.addEventListener('click', closeConfirmDeleteItem);
+document.getElementById('confirmDeleteItemCancel')?.addEventListener('click', closeConfirmDeleteItem);
+deleteItemModal?.addEventListener('click', (e) => { if (e.target === deleteItemModal) closeConfirmDeleteItem(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeConfirmDeleteItem(); }
+});
+
+document.getElementById('confirmDeleteItemOk')?.addEventListener('click', async () => {
+  const id = _pendingDeleteId;
+  closeConfirmDeleteItem();
+  try {
+    await api.deleteInventoryItem(id);
+    showToast('Ingrediente eliminado');
+    loadInventory();
+  } catch {
+    showToast('Error al eliminar el ingrediente');
+  }
+});
+
 tbody?.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
   const id = Number(btn.dataset.edit || btn.dataset.del);
-  if (btn.dataset.del) {
-    if (confirm('¿Borrar este ingrediente del inventario?')) {
-      await api.deleteInventoryItem(id);
-      showToast('Ingrediente eliminado');
-      loadInventory();
-    }
-  }
+  if (btn.dataset.del) openConfirmDeleteItem(id);
   if (btn.dataset.edit) {
     const item = (window.__inventoryItems || []).find(x => x.id === id);
     if (item) openEditModal(item);

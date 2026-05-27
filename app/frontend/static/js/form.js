@@ -26,7 +26,17 @@ document.querySelectorAll('.star-btn').forEach(btn => {
 
 async function prefillForm() {
   if (!isEditing) return;
-  const r = await api.getRecipe(window.EDIT_RECIPE_ID);
+  let r;
+  try {
+    r = await api.getRecipe(window.EDIT_RECIPE_ID);
+  } catch {
+    showToast('No se ha podido cargar la receta para editar');
+    return;
+  }
+  if (!r) {
+    showToast('Receta no encontrada');
+    return;
+  }
   form.elements.title.value = r.title || '';
   form.elements.description.value = r.description || '';
   form.elements.category.value = r.category || 'General';

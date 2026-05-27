@@ -71,7 +71,8 @@ const api = {
   },
 
   async deleteRecipe(id) {
-    return _fetch(`/api/recipes/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    const res = await _fetch(`/api/recipes/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    if (!res || !res.ok) throw new Error('Error al eliminar la receta');
   },
 
   async listInventory() {
@@ -110,7 +111,8 @@ const api = {
   },
 
   async deleteInventoryItem(id) {
-    return _fetch(`/api/inventory/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    const res = await _fetch(`/api/inventory/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    if (!res || !res.ok) throw new Error('Error al eliminar el ingrediente');
   },
 
   async cookRecipe(id) {

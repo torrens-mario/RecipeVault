@@ -129,6 +129,20 @@
       </form>
     </div>
   </div>
+  <!-- Delete confirmation modal -->
+  <div id="confirmDeleteItemModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteItemTitle" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title" id="confirmDeleteItemTitle">Eliminar ingrediente</div>
+        <button type="button" class="modal-close" id="confirmDeleteItemClose" aria-label="Cerrar">✕</button>
+      </div>
+      <p style="margin:12px 0 20px;">¿Seguro que quieres eliminar este ingrediente del inventario? Esta acción no se puede deshacer.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="confirmDeleteItemCancel">Cancelar</button>
+        <button type="button" class="btn primary" id="confirmDeleteItemOk" style="background:#c9435b;border-color:#c9435b;">Eliminar</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 {% block scripts %}
   <script src="/static/js/inventory.js"></script>

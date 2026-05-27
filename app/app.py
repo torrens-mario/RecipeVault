@@ -102,11 +102,11 @@ def new_recipe_page(request: Request):
 
 @app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
 def edit_recipe_page(request: Request, recipe_id: int):
-    return templates.TemplateResponse("recipe-form.html", {"request": request, "edit_recipe_id": recipe_id})
+    return templates.TemplateResponse("recipe-form.html", {"request": request, "edit_recipe_id": recipe_id, "active_page": "recipes"})
 
 @app.get("/recipes/{recipe_id}", response_class=HTMLResponse)
 def detail_page(request: Request, recipe_id: int):
-    return templates.TemplateResponse("recipe-detail.html", {"request": request, "recipe_id": recipe_id})
+    return templates.TemplateResponse("recipe-detail.html", {"request": request, "recipe_id": recipe_id, "active_page": "recipes"})
 
 @app.get("/shared/{recipe_id}", response_class=HTMLResponse)
 def shared_recipe_page(request: Request, recipe_id: int):

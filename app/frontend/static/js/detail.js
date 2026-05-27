@@ -162,8 +162,12 @@
 
   document.getElementById('confirmDeleteOk')?.addEventListener('click', async () => {
     closeConfirmDelete();
-    await api.deleteRecipe(r.id);
-    showToast('Receta eliminada');
-    window.location.href = '/';
+    try {
+      await api.deleteRecipe(r.id);
+      showToast('Receta eliminada');
+      window.location.href = '/';
+    } catch {
+      showToast('Error al eliminar la receta');
+    }
   });
 })();

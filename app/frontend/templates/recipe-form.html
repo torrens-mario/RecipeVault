@@ -6,11 +6,11 @@
       <p class="muted">Rellena los campos para guardar tu receta.</p>
     </section>
     <form id="recipeForm" class="form card form-card">
-      <input name="title" placeholder="Título" required>
-      <textarea name="description" placeholder="Descripción"></textarea>
-      <input name="category" placeholder="Categoría" value="General">
+      <input name="title" placeholder="Título" maxlength="200" required>
+      <textarea name="description" placeholder="Descripción" maxlength="5000"></textarea>
+      <input name="category" placeholder="Categoría" value="General" maxlength="50">
       <div class="form-row-2">
-        <input name="servings" type="number" value="2" min="1" max="20" placeholder="Raciones">
+        <input name="servings" type="number" value="2" min="1" max="100" placeholder="Raciones">
         <select name="difficulty">
           <option value="Fácil">Fácil</option>
           <option value="Media" selected>Media</option>
