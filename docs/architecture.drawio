@@ -1,0 +1,181 @@
+<mxfile host="app.diagrams.net" version="21.0.2">
+  <diagram id="RecipeVault-arch" name="Arquitectura RecipeVault">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ─── TÍTULO ──────────────────────────────────────────────── -->
+        <mxCell id="title"
+          value="RecipeVault — Arquitectura en Azure"
+          style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;fontSize=24;fontStyle=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="380" y="10" width="880" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ─── AZURE BOUNDARY ──────────────────────────────────────── -->
+        <mxCell id="azure"
+          value="Microsoft Azure"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#0078D4;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#0078D4;verticalAlign=top;align=left;spacingLeft=18;spacingTop=12;arcSize=2;"
+          vertex="1" parent="1">
+          <mxGeometry x="310" y="40" width="1300" height="1090" as="geometry" />
+        </mxCell>
+
+        <!-- ─── APP SERVICE ─────────────────────────────────────────── -->
+        <mxCell id="appservice"
+          value="&lt;b style='font-size:15px'&gt;App Service&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Python 3.11 / FastAPI&lt;br/&gt;gunicorn + uvicorn&lt;br/&gt;&lt;font color='#cce5ff'&gt;&lt;i&gt;recipevault-api-dev&lt;/i&gt;&lt;/font&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0078D4;strokeColor=#005a9e;strokeWidth=2;fontColor=#ffffff;fontSize=12;arcSize=8;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="555" y="460" width="270" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- ─── MANAGED IDENTITY ────────────────────────────────────── -->
+        <mxCell id="mi"
+          value="&lt;b&gt;Managed Identity (UAMI)&lt;/b&gt;&lt;br/&gt;Sin secretos en el código"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;fontSize=10;"
+          vertex="1" parent="1">
+          <mxGeometry x="555" y="660" width="270" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ─── POSTGRESQL ──────────────────────────────────────────── -->
+        <mxCell id="postgres"
+          value="&lt;b&gt;PostgreSQL Flexible Server v16&lt;/b&gt;&lt;br/&gt;SSLMode = require&lt;br/&gt;Recetas · Usuarios · Inventario"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=11;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="1020" y="320" width="340" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ─── BLOB STORAGE ────────────────────────────────────────── -->
+        <mxCell id="blob"
+          value="&lt;b&gt;Blob Storage&lt;/b&gt;&lt;br/&gt;Storage Account (LRS)&lt;br/&gt;Imágenes de recetas · HTTPS obligatorio"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;fontSize=11;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="1020" y="450" width="340" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ─── APPLICATION INSIGHTS ───────────────────────────────── -->
+        <mxCell id="appinsights"
+          value="&lt;b&gt;Application Insights&lt;/b&gt;&lt;br/&gt;+ Log Analytics Workspace&lt;br/&gt;INFO · WARNING · ERROR · Métricas"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=11;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="1020" y="580" width="340" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ─── KEY VAULT ───────────────────────────────────────────── -->
+        <mxCell id="keyvault"
+          value="&lt;b&gt;Key Vault&lt;/b&gt;&lt;br/&gt;JWT Secret · DB Password&lt;br/&gt;RBAC — permisos mínimos"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;fontSize=11;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="1020" y="710" width="340" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ─── AZURE POLICIES (nota) ───────────────────────────────── -->
+        <mxCell id="policies"
+          value="&lt;b&gt;Azure Policies&lt;/b&gt;&lt;br/&gt;① HTTPS obligatorio en Blob Storage&lt;br/&gt;② Tags obligatorios en todos los recursos"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1;fontSize=10;dashed=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="340" y="940" width="310" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ─── GITHUB ACTIONS ──────────────────────────────────────── -->
+        <mxCell id="github"
+          value="&lt;b&gt;GitHub Actions&lt;/b&gt;&lt;br/&gt;Tests · Build · Deploy&lt;br/&gt;&lt;i&gt;push to main&lt;/i&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#24292e;strokeWidth=2;fontSize=12;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="50" y="55" width="210" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- ─── USUARIO / NAVEGADOR ─────────────────────────────────── -->
+        <mxCell id="browser"
+          value="&lt;b&gt;Usuario&lt;/b&gt;&lt;br/&gt;Navegador Web"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#555555;strokeWidth=2;fontSize=13;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="50" y="490" width="190" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ─── TERRAFORM ───────────────────────────────────────────── -->
+        <mxCell id="terraform"
+          value="&lt;b&gt;Terraform&lt;/b&gt;&lt;br/&gt;Infraestructura como código&lt;br/&gt;&lt;i&gt;terraform-appservice/&lt;/i&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4eefe;strokeColor=#7B42BC;strokeWidth=2;fontSize=12;shadow=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="50" y="880" width="210" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- ═══ FLECHAS ═══════════════════════════════════════════════ -->
+
+        <!-- Usuario → App Service: HTTPS -->
+        <mxCell id="e-browser"
+          value="HTTPS"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#0078D4;strokeWidth=2;fontStyle=1;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          edge="1" source="browser" target="appservice" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- GitHub → App Service: Deploy (OIDC) -->
+        <mxCell id="e-github"
+          value="Deploy (OIDC — sin contraseñas)"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#24292e;strokeWidth=2;fontStyle=1;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;"
+          edge="1" source="github" target="appservice" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Service → PostgreSQL: SQLAlchemy -->
+        <mxCell id="e-postgres"
+          value="SQLAlchemy · SSL"
+          style="curved=1;rounded=0;strokeColor=#82b366;strokeWidth=2;fontSize=10;fontStyle=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          edge="1" source="appservice" target="postgres" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Service → Blob Storage: Managed Identity -->
+        <mxCell id="e-blob"
+          value="Managed Identity"
+          style="curved=1;rounded=0;strokeColor=#d6b656;strokeWidth=2;fontSize=10;fontStyle=1;exitX=1;exitY=0.45;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          edge="1" source="appservice" target="blob" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Service → App Insights: OpenTelemetry -->
+        <mxCell id="e-insights"
+          value="OpenTelemetry"
+          style="curved=1;rounded=0;strokeColor=#9673a6;strokeWidth=2;fontSize=10;fontStyle=1;exitX=1;exitY=0.65;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          edge="1" source="appservice" target="appinsights" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Service → Key Vault: RBAC -->
+        <mxCell id="e-keyvault"
+          value="RBAC (Managed Identity)"
+          style="curved=1;rounded=0;strokeColor=#b85450;strokeWidth=2;fontSize=10;fontStyle=1;exitX=1;exitY=0.85;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          edge="1" source="appservice" target="keyvault" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Terraform → Azure: terraform apply (dashed) -->
+        <mxCell id="e-terraform"
+          value="terraform apply"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#7B42BC;strokeWidth=2;fontStyle=3;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.92;entryDx=0;entryDy=0;"
+          edge="1" source="terraform" target="azure" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Managed Identity → Blob Storage (dashed, indica qué usa la MI) -->
+        <mxCell id="e-mi-blob"
+          value=""
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#6c8ebf;strokeWidth=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.85;entryDx=0;entryDy=0;"
+          edge="1" source="mi" target="blob" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Managed Identity → Key Vault (dashed) -->
+        <mxCell id="e-mi-kv"
+          value=""
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#6c8ebf;strokeWidth=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.15;entryDx=0;entryDy=0;"
+          edge="1" source="mi" target="keyvault" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -49,6 +49,10 @@
         </button>
         <button class="btn secondary" id="publicBtn">${r.is_public ? '🔓 Hacer privada' : '🔒 Hacer pública'}</button>
         ${r.is_public ? `<button class="btn secondary" id="shareBtn">Copiar enlace</button>` : ''}
+        <label class="btn secondary" id="imageUploadLabel" style="cursor:pointer;">
+          📷 Cambiar imagen
+          <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        </label>
         <a class="btn secondary" href="/recipes/${r.id}/edit">Editar receta</a>
         <button class="btn secondary" id="deleteBtn" style="color:#c9435b;border-color:#f2bbc4;">Eliminar receta</button>
       </div>
@@ -78,6 +82,54 @@
   document.getElementById('planBtn')?.addEventListener('click', async () => {
     await api.togglePlan(r.id);
     location.reload();
+  });
+
+  document.getElementById('imageInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      showToast('Solo se permiten imágenes JPEG, PNG o WebP');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('La imagen es demasiado grande (máximo 5 MB)');
+      e.target.value = '';
+      return;
+    }
+
+    const label = document.getElementById('imageUploadLabel');
+    label.style.pointerEvents = 'none';
+    label.style.opacity = '0.6';
+    label.childNodes[0].textContent = ' Subiendo...';
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/recipes/${window.RECIPE_ID}/image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.detail || 'Error al subir la imagen');
+        return;
+      }
+      const data = await res.json();
+      document.querySelector('.detail-photo').src = data.image_url;
+      showToast('Imagen actualizada');
+    } catch {
+      showToast('Error de red al subir la imagen');
+    } finally {
+      label.style.pointerEvents = '';
+      label.style.opacity = '';
+      label.childNodes[0].textContent = ' 📷 Cambiar imagen';
+      e.target.value = '';
+    }
   });
 
   document.getElementById('deleteBtn')?.addEventListener('click', async () => {

@@ -12,3 +12,4 @@ bcrypt==3.2.2
 azure-storage-blob==12.23.1
 azure-identity==1.19.0
 azure-monitor-opentelemetry==1.6.4
+Pillow==10.4.0

@@ -32,7 +32,7 @@ from database import (
     update_recipe_image, init_db, seed_default_recipes, seed_default_inventory,
 )
 from models import RecipeCreate, RecipeUpdate, UserLogin, UserRegister
-from storage import upload_recipe_image
+from storage import upload_recipe_image, validate_and_sanitize_image
 
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title="RecipeVault")
@@ -174,8 +174,13 @@ async def api_upload_recipe_image(
     if not recipe:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
     data = await file.read()
-    image_url = upload_recipe_image(data, file.content_type or "image/jpeg")
+    try:
+        clean_data = validate_and_sanitize_image(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    image_url = upload_recipe_image(clean_data)
     updated = update_recipe_image(recipe_id, user_id, image_url)
+    logger.info("Imagen de receta actualizada: id=%s (user=%s)", recipe_id, user_id)
     return {"image_url": updated.image if updated else image_url}
 
 @app.post("/api/recipes/{recipe_id}/favorite")
