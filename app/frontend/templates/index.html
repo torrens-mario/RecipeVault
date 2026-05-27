@@ -1,23 +1,6 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RecipeVault</title>
-  <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body class="app-body">
-  <header class="topbar">
-    <div class="logo">RecipeVault</div>
-    <nav class="nav-links">
-      <a href="/" class="active">🍽 <span>Mis recetas</span></a>
-      <a href="/inventory">🥫 <span>Inventario</span></a>
-      <a href="/shopping-list">🛒 <span>Lista de la compra</span><span id="shoppingBadge" class="nav-badge" style="display:none">0</span></a>
-      <a href="/recipes/new">＋ <span>Nueva receta</span></a>
-      <a href="#" onclick="logout();return false;" class="nav-logout">👤 <span id="navUser"></span></a>
-    </nav>
-  </header>
-  <main class="container">
+{% extends "base.html" %}
+{% block title %}RecipeVault{% endblock %}
+{% block content %}
     <section class="hero">
       <div>
         <h1>Tus recetas, tu despensa</h1>
@@ -46,11 +29,7 @@
       <h2 class="section-title">🍽 <span>Mis recetas</span></h2>
       <div id="recipes" class="grid"></div>
     </section>
-  </main>
-  <script src="/static/js/auth.js"></script>
-  <script src="/static/js/api.js"></script>
-  <script src="/static/js/utils.js"></script>
+{% endblock %}
+{% block scripts %}
   <script src="/static/js/app.js"></script>
-  <script src="/static/js/nav-badge.js"></script>
-</body>
-</html>
+{% endblock %}

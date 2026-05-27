@@ -76,7 +76,7 @@ def startup():
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "active_page": "recipes"})
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
@@ -88,7 +88,7 @@ def register_page(request: Request):
 
 @app.get("/recipes/new", response_class=HTMLResponse)
 def new_recipe_page(request: Request):
-    return templates.TemplateResponse("recipe-form.html", {"request": request})
+    return templates.TemplateResponse("recipe-form.html", {"request": request, "active_page": "new_recipe"})
 
 @app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
 def edit_recipe_page(request: Request, recipe_id: int):
@@ -111,11 +111,11 @@ def api_get_shared_recipe(recipe_id: int):
 
 @app.get("/inventory", response_class=HTMLResponse)
 def inventory_page(request: Request):
-    return templates.TemplateResponse("inventory.html", {"request": request})
+    return templates.TemplateResponse("inventory.html", {"request": request, "active_page": "inventory"})
 
 @app.get("/shopping-list", response_class=HTMLResponse)
 def shopping_list_page(request: Request):
-    return templates.TemplateResponse("shopping-list.html", {"request": request})
+    return templates.TemplateResponse("shopping-list.html", {"request": request, "active_page": "shopping"})
 
 
 # ── Auth API ──────────────────────────────────────────────────────────────────
