@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from typing import List
 
 
@@ -42,10 +42,10 @@ class Recipe(RecipeBase):
 
 class UserRegister(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     password: str
 
 
 class UserLogin(BaseModel):
-    email: str
+    email: EmailStr
     password: str
