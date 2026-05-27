@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 from pathlib import Path
 
@@ -33,6 +34,17 @@ from database import (
 )
 from models import RecipeCreate, RecipeUpdate, UserLogin, UserRegister
 from storage import upload_recipe_image, validate_and_sanitize_image
+
+def _parse_qty(value, default: float = 0.0) -> float:
+    """Parsea un valor numérico de inventario. Rechaza inf, nan, negativos y no-numéricos."""
+    try:
+        v = float(value if value is not None else default)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
+    if not math.isfinite(v) or v < 0:
+        raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
+    return v
+
 
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title="RecipeVault")
@@ -239,10 +251,10 @@ def api_shopping_list(user_id: int = Depends(get_current_user_id)):
 def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_user_id)):
     name = str(payload.get("name", "")).strip()
     unit = str(payload.get("unit", "")).strip()
-    quantity = float(payload.get("quantity", 0))
-    threshold = float(payload.get("low_stock_threshold", 5))
+    quantity = _parse_qty(payload.get("quantity", 0))
+    threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit or quantity < 0:
+    if not name or not unit:
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = create_inventory_item(
         user_id=user_id, name=name, quantity=quantity, unit=unit,
@@ -255,10 +267,10 @@ def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_
 def api_update_inventory_item(item_id: int, payload: dict, user_id: int = Depends(get_current_user_id)):
     name = str(payload.get("name", "")).strip()
     unit = str(payload.get("unit", "")).strip()
-    quantity = float(payload.get("quantity", 0))
-    threshold = float(payload.get("low_stock_threshold", 5))
+    quantity = _parse_qty(payload.get("quantity", 0))
+    threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit or quantity < 0:
+    if not name or not unit:
         logger.warning("Datos de inventario no válidos — user=%s payload=%s", user_id, payload)
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = update_inventory_item(
