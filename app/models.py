@@ -3,26 +3,26 @@ from typing import List
 
 
 class Ingredient(BaseModel):
-    name: str
-    amount: str
+    name: str = Field(min_length=1, max_length=100)
+    amount: str = Field(default="", max_length=50)
 
 
 class RecipeBase(BaseModel):
-    title: str
-    description: str = ""
-    category: str = "General"
-    servings: int = 2
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=5000)
+    category: str = Field(default="General", max_length=50)
+    servings: int = Field(default=2, ge=1, le=100)
     ingredients: List[Ingredient] = Field(default_factory=list)
     steps: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
     favorite: bool = False
-    image: str = ""
+    image: str = Field(default="", max_length=500)
     planned_to_cook: bool = False
-    prep_time: int = 0
-    cook_time: int = 0
-    difficulty: str = "Media"
-    notes: str = ""
-    rating: float = 0
+    prep_time: int = Field(default=0, ge=0, le=1440)
+    cook_time: int = Field(default=0, ge=0, le=1440)
+    difficulty: str = Field(default="Media", max_length=20)
+    notes: str = Field(default="", max_length=5000)
+    rating: float = Field(default=0, ge=0, le=5)
 
 
 class RecipeCreate(RecipeBase):
