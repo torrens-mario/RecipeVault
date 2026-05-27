@@ -5,6 +5,11 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
 
+# Silenciar loggers internos del SDK de Azure que generan demasiado ruido
+logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+logging.getLogger("azure.monitor.opentelemetry.exporter").setLevel(logging.WARNING)
+logging.getLogger("azure.core").setLevel(logging.WARNING)
+
 if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     from azure.monitor.opentelemetry import configure_azure_monitor
     configure_azure_monitor()
