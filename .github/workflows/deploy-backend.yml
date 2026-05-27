@@ -6,7 +6,7 @@ on:
     paths:
       - 'app/*.py'
       - 'app/requirements.txt'
-      - 'app/backend/**'
+      - 'app/frontend/**'
   workflow_dispatch:
 
 permissions:
@@ -46,8 +46,7 @@ jobs:
             --exclude "__pycache__/*" \
             --exclude "venv/*" \
             --exclude ".env*" \
-            --exclude "recipes.json" \
-            --exclude "inventory.json"
+            --exclude "tests/*"
 
       - name: Desplegar a App Service
         run: |
