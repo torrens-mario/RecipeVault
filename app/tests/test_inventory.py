@@ -43,6 +43,22 @@ def test_eliminar_item_inventario(client, auth_headers, inventory_item):
     assert not any(x["id"] == inventory_item["id"] for x in items)
 
 
+def test_actualizar_item_inexistente_devuelve_404(client, auth_headers):
+    r = client.put("/api/inventory/999999", headers=auth_headers, json={
+        "name": "No existe",
+        "quantity": 100,
+        "unit": "g",
+        "low_stock_threshold": 10,
+        "low_stock_unit": "g",
+    })
+    assert r.status_code == 404
+
+
+def test_eliminar_item_inexistente_devuelve_404(client, auth_headers):
+    r = client.delete("/api/inventory/999999", headers=auth_headers)
+    assert r.status_code == 404
+
+
 def test_shopping_list_devuelve_estructura_correcta(client, auth_headers):
     r = client.get("/api/shopping-list", headers=auth_headers)
     assert r.status_code == 200

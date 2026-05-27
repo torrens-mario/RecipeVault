@@ -38,6 +38,6 @@
   const interval = setInterval(() => {
     bind();
     const btn = document.getElementById('cookBtn');
-    if (btn || ++attempts >= 20) clearInterval(interval);
+    if (btn || ++attempts >= 50) clearInterval(interval);
   }, 200);
 })();

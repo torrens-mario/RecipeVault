@@ -120,3 +120,44 @@ def test_inventario_low_stock_unit_demasiado_larga_devuelve_400(client, auth_hea
         "low_stock_unit": "x" * 21,
     })
     assert r.status_code == 400
+
+
+def test_receta_raciones_cero_devuelve_422(client, auth_headers):
+    r = client.post("/api/recipes", headers=auth_headers, json={
+        "title": "Test raciones",
+        "description": "",
+        "category": "Test",
+        "servings": 0,
+        "ingredients": [],
+        "steps": [],
+        "tags": [],
+    })
+    assert r.status_code == 422
+
+
+def test_receta_valoracion_fuera_de_rango_devuelve_422(client, auth_headers):
+    r = client.post("/api/recipes", headers=auth_headers, json={
+        "title": "Test valoración",
+        "description": "",
+        "category": "Test",
+        "servings": 2,
+        "ingredients": [],
+        "steps": [],
+        "tags": [],
+        "rating": 6,
+    })
+    assert r.status_code == 422
+
+
+def test_receta_prep_time_fuera_de_rango_devuelve_422(client, auth_headers):
+    r = client.post("/api/recipes", headers=auth_headers, json={
+        "title": "Test tiempo",
+        "description": "",
+        "category": "Test",
+        "servings": 2,
+        "ingredients": [],
+        "steps": [],
+        "tags": [],
+        "prep_time": 1441,
+    })
+    assert r.status_code == 422

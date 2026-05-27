@@ -112,11 +112,15 @@ function renderTable(items) {
 
 async function loadInventory() {
   if (!tbody) return;
-  const [items, lowStock] = await Promise.all([api.listInventory(), api.lowStockItems()]);
-  _lowStockIds = new Set(lowStock.map(i => i.id));
-  window.__inventoryItems = items;
-  renderTable(items);
-  renderLowStockItems(lowStock);
+  try {
+    const [items, lowStock] = await Promise.all([api.listInventory(), api.lowStockItems()]);
+    _lowStockIds = new Set(lowStock.map(i => i.id));
+    window.__inventoryItems = items;
+    renderTable(items);
+    renderLowStockItems(lowStock);
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#c9435b;">Error al cargar el inventario. Recarga la página.</td></tr>';
+  }
 }
 
 // ── Events ─────────────────────────────────────────────────────────────────────

@@ -38,6 +38,18 @@ def test_toggle_plan(client, auth_headers, recipe):
     assert r2.json()["planned_to_cook"] is False
 
 
+def test_toggle_public_idempotente(client, auth_headers, recipe):
+    assert recipe["is_public"] is True
+
+    r = client.post(f"/api/recipes/{recipe['id']}/public", headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["is_public"] is False
+
+    r2 = client.post(f"/api/recipes/{recipe['id']}/public", headers=auth_headers)
+    assert r2.status_code == 200
+    assert r2.json()["is_public"] is True
+
+
 def test_auth_me(client, auth_headers, new_user):
     r = client.get("/api/auth/me", headers=auth_headers)
     assert r.status_code == 200

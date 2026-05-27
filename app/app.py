@@ -113,7 +113,8 @@ def shared_recipe_page(request: Request, recipe_id: int):
     return templates.TemplateResponse("shared-recipe.html", {"request": request, "recipe_id": recipe_id})
 
 @app.get("/api/shared/{recipe_id}")
-def api_get_shared_recipe(recipe_id: int):
+@limiter.limit("30/minute")
+def api_get_shared_recipe(request: Request, recipe_id: int):
     recipe = get_recipe_public(recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
