@@ -202,7 +202,11 @@ async def api_upload_recipe_image(
         clean_data = validate_and_sanitize_image(data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    image_url = upload_recipe_image(clean_data)
+    try:
+        image_url = upload_recipe_image(clean_data)
+    except Exception as e:
+        logger.error("Error al subir imagen a Azure Storage: %s", e)
+        raise HTTPException(status_code=503, detail="Error al subir la imagen. Inténtalo de nuevo.")
     updated = update_recipe_image(recipe_id, user_id, image_url)
     logger.info("Imagen de receta actualizada: id=%s (user=%s)", recipe_id, user_id)
     return {"image_url": updated.image if updated else image_url}

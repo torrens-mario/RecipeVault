@@ -33,7 +33,7 @@
 
   container.innerHTML = `
     <article class="card detail-card">
-      <img class="detail-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">
+      ${r.image ? `<img class="detail-photo" src="${esc(r.image)}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">` : ''}
       <h1 style="font-size:1.5rem;margin-bottom:4px;">${esc(r.title)}</h1>
       <div class="detail-meta">
         <span class="muted">${esc(r.category)} · ${r.servings} raciones</span>
@@ -130,7 +130,16 @@
         return;
       }
       const data = await res.json();
-      const photo = document.querySelector('.detail-photo');
+      let photo = document.querySelector('.detail-photo');
+      if (!photo) {
+        photo = document.createElement('img');
+        photo.className = 'detail-photo';
+        photo.loading = 'lazy';
+        photo.width = 1200;
+        photo.height = 800;
+        photo.onerror = () => { photo.onerror = null; photo.style.display = 'none'; };
+        document.querySelector('.detail-card').prepend(photo);
+      }
       photo.style.display = '';
       photo.src = data.image_url;
       showToast('Imagen actualizada');

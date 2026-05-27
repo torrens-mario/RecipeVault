@@ -19,12 +19,14 @@ const api = {
   async listRecipes(q = '') {
     const url = q ? `/api/recipes?q=${encodeURIComponent(q)}` : '/api/recipes';
     const res = await _fetch(url, { headers: _authHeaders() });
-    return res ? res.json() : [];
+    if (!res || !res.ok) return [];
+    return res.json();
   },
 
   async getRecipe(id) {
     const res = await _fetch(`/api/recipes/${id}`, { headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al cargar la receta');
+    return res.json();
   },
 
   async createRecipe(payload) {
@@ -77,17 +79,20 @@ const api = {
 
   async listInventory() {
     const res = await _fetch('/api/inventory', { headers: _authHeaders() });
-    return res ? res.json() : [];
+    if (!res || !res.ok) return [];
+    return res.json();
   },
 
   async lowStockItems() {
     const res = await _fetch('/api/inventory/low-stock', { headers: _authHeaders() });
-    return res ? res.json() : [];
+    if (!res || !res.ok) return [];
+    return res.json();
   },
 
   async shoppingList() {
     const res = await _fetch('/api/shopping-list', { headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) return null;
+    return res.json();
   },
 
   async createInventoryItem(payload) {
