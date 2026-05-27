@@ -258,7 +258,7 @@ def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_
     quantity = _parse_qty(payload.get("quantity", 0))
     threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit:
+    if not name or not unit or len(name) > 100:
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = create_inventory_item(
         user_id=user_id, name=name, quantity=quantity, unit=unit,
@@ -274,7 +274,7 @@ def api_update_inventory_item(item_id: int, payload: dict, user_id: int = Depend
     quantity = _parse_qty(payload.get("quantity", 0))
     threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit:
+    if not name or not unit or len(name) > 100:
         logger.warning("Datos de inventario no válidos — user=%s payload=%s", user_id, payload)
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = update_inventory_item(
