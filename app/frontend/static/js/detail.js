@@ -80,18 +80,18 @@
   });
 
   document.getElementById('publicBtn')?.addEventListener('click', async () => {
-    await api.togglePublic(r.id);
-    location.reload();
+    try { await api.togglePublic(r.id); location.reload(); }
+    catch { showToast('Error al cambiar visibilidad'); }
   });
 
   document.getElementById('favoriteBtn')?.addEventListener('click', async () => {
-    await api.toggleFavorite(r.id);
-    location.reload();
+    try { await api.toggleFavorite(r.id); location.reload(); }
+    catch { showToast('Error al actualizar favorito'); }
   });
 
   document.getElementById('planBtn')?.addEventListener('click', async () => {
-    await api.togglePlan(r.id);
-    location.reload();
+    try { await api.togglePlan(r.id); location.reload(); }
+    catch { showToast('Error al actualizar plan'); }
   });
 
   document.getElementById('imageInput')?.addEventListener('change', async (e) => {
@@ -130,7 +130,9 @@
         return;
       }
       const data = await res.json();
-      document.querySelector('.detail-photo').src = data.image_url;
+      const photo = document.querySelector('.detail-photo');
+      photo.style.display = '';
+      photo.src = data.image_url;
       showToast('Imagen actualizada');
     } catch {
       showToast('Error de red al subir la imagen');

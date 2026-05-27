@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
 from passlib.context import CryptContext
 
 ALGORITHM = "HS256"
@@ -40,5 +40,5 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(_bea
         if user_id is None:
             raise HTTPException(status_code=401, detail="Token inválido")
         return int(user_id)
-    except (JWTError, ValueError):
+    except (jwt.PyJWTError, ValueError):
         raise HTTPException(status_code=401, detail="Token inválido o expirado")

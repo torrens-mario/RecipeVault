@@ -47,7 +47,7 @@ function renderRecipes(items) {
   }
   grid.innerHTML = sorted.map(r => `
     <article class="card recipe-card">
-      <img class="recipe-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800">
+      <img class="recipe-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">
       <div class="recipe-card-body">
         <div class="recipe-card-head">
           <h3>${esc(r.title)} ${r.is_public === false ? '<span class="private-badge" title="Receta privada">🔒</span>' : ''}</h3>
@@ -112,8 +112,14 @@ filterPlan?.addEventListener('click', () => toggleFilterBtn(filterPlan));
 grid?.addEventListener('click', async (e) => {
   const fav = e.target.closest('[data-favorite]');
   const plan = e.target.closest('[data-plan]');
-  if (fav) { await api.toggleFavorite(Number(fav.dataset.favorite)); await loadRecipes(); }
-  if (plan) { await api.togglePlan(Number(plan.dataset.plan)); await loadRecipes(); }
+  if (fav) {
+    try { await api.toggleFavorite(Number(fav.dataset.favorite)); await loadRecipes(); }
+    catch { showToast('Error al actualizar favorito'); }
+  }
+  if (plan) {
+    try { await api.togglePlan(Number(plan.dataset.plan)); await loadRecipes(); }
+    catch { showToast('Error al actualizar plan'); }
+  }
 });
 
 loadRecipes();

@@ -60,12 +60,14 @@ const api = {
 
   async toggleFavorite(id) {
     const res = await _fetch(`/api/recipes/${id}/favorite`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar favorito');
+    return res.json();
   },
 
   async togglePlan(id) {
     const res = await _fetch(`/api/recipes/${id}/plan`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar plan');
+    return res.json();
   },
 
   async deleteRecipe(id) {
@@ -118,6 +120,7 @@ const api = {
 
   async togglePublic(id) {
     const res = await _fetch(`/api/recipes/${id}/public`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al cambiar visibilidad');
+    return res.json();
   }
 };
