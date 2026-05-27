@@ -27,7 +27,11 @@ const ICONS = {
 
 function iconForIngredient(name) {
   const key = String(name || '').toLowerCase();
-  return ICONS[key] || '🛒';
+  if (ICONS[key]) return ICONS[key];
+  for (const k of Object.keys(ICONS)) {
+    if (key.includes(k)) return ICONS[k];
+  }
+  return '🛒';
 }
 
 function showToast(message) {
