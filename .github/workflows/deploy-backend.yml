@@ -56,6 +56,7 @@ jobs:
               --name ${{ env.APP_SERVICE_NAME }} \
               --src-path deploy.zip \
               --type zip \
+              --build-remote true \
               --timeout 600 && break
             echo "Intento $i fallido, esperando 60s..."
             sleep 60
