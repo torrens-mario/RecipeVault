@@ -4,31 +4,47 @@ Aplicación web de gestión de recetas de cocina desarrollada como proyecto de l
 
 ---
 
+## Tabla de contenidos
+
+- [Funcionalidades](#funcionalidades)
+- [Arquitectura](#arquitectura)
+- [Estructura del repositorio](#estructura-del-repositorio)
+- [Stack tecnológico](#stack-tecnológico)
+- [Variables de entorno](#variables-de-entorno)
+- [Ejecución en local](#ejecución-en-local)
+- [Tests](#tests)
+- [Despliegue desde cero](#despliegue-desde-cero)
+- [Seguridad](#seguridad)
+- [Logs y monitorización](#logs-y-monitorización)
+- [Bugs encontrados y solucionados](#bugs-encontrados-y-solucionados)
+- [Resolución de problemas](#resolución-de-problemas)
+
+---
+
 ## Funcionalidades
 
 ### Recetas
-- Crear, editar y eliminar recetas con título, descripción, categoría, ingredientes, pasos, etiquetas, dificultad, tiempo de preparación/cocción y notas
-- Valoración con estrellas (1-5)
-- Imagen automática asignada según el tipo de receta (con posibilidad de subir imagen propia)
+- Crear, editar y eliminar recetas con título, descripción, categoría, ingredientes, pasos, etiquetas, dificultad, tiempo de preparación/cocción y notas personales
+- Valoración con estrellas (1–5)
+- Imagen automática asignada según el tipo de receta (con posibilidad de subir imagen propia en JPEG, PNG o WebP)
 - Marcar recetas como **favoritas** o **planificadas para cocinar**
-- Filtrar por categoría, favoritas o planificadas
-- Ordenar por fecha, nombre o mejor valoradas
+- Filtrar por categoría, dificultad, favoritas o planificadas; ordenar por nombre, valoración o número de ingredientes
 - Hacer una receta **pública** (accesible sin login mediante enlace compartido) o **privada**
 
 ### Inventario
 - Gestionar el stock de ingredientes con nombre, cantidad, unidad y umbral de stock mínimo
-- Indicador visual de ingredientes por debajo del umbral
-- Búsqueda de ingredientes en tiempo real
-- Al "cocinar" una receta, descuenta automáticamente los ingredientes del inventario
+- Indicador visual de ingredientes por debajo del umbral, calculado en el servidor (no en el navegador)
+- Búsqueda de ingredientes en tiempo real (filtrado local)
+- Al "cocinar" una receta, descuenta automáticamente los ingredientes del inventario con conversión de unidades (g↔kg, ml↔l, etc.)
 
 ### Lista de la compra
 - Generada automáticamente a partir de las recetas planificadas y el inventario actual
-- Muestra qué ingredientes faltan y cuáles están por debajo del umbral
+- Muestra qué ingredientes faltan y cuáles están por debajo del umbral mínimo
 
 ### Usuarios
 - Registro e inicio de sesión con email y contraseña
 - Recetas e ingredientes de ejemplo precargados al registrarse
-- Cada usuario solo ve y gestiona sus propios datos
+- Aislamiento total: cada usuario solo ve y gestiona sus propios datos
 
 ---
 
@@ -71,26 +87,61 @@ RecipeVault/
 │   ├── database.py         # Acceso a datos (SQLAlchemy, lógica de negocio)
 │   ├── db_models.py        # Modelos ORM (tablas de la base de datos)
 │   ├── models.py           # Esquemas Pydantic (validación de entrada/salida)
-│   ├── auth.py             # Creación y validación de tokens JWT
-│   ├── storage.py          # Subida de imágenes a Azure Blob Storage
+│   ├── auth.py             # JWT: creación y validación de tokens
+│   ├── storage.py          # Validación y subida de imágenes a Azure Blob Storage
 │   ├── requirements.txt
 │   ├── requirements-test.txt
 │   ├── frontend/
 │   │   ├── templates/      # Páginas HTML (Jinja2)
-│   │   └── static/         # CSS y JavaScript
+│   │   └── static/
+│   │       ├── css/
+│   │       └── js/
+│   │           ├── api.js          # Cliente HTTP (fetch wrapper con auth)
+│   │           ├── app.js          # Listado y filtrado de recetas
+│   │           ├── detail.js       # Detalle de receta
+│   │           ├── form.js         # Formulario crear/editar receta
+│   │           ├── inventory.js    # Gestión del inventario
+│   │           ├── shopping-list.js
+│   │           ├── cook.js         # Botón "Cocinar" en detalle de receta
+│   │           ├── shared-recipe.js# Vista pública (sin login)
+│   │           ├── auth.js         # Login/logout y protección de rutas
+│   │           ├── utils.js        # esc(), showToast(), iconForIngredient()
+│   │           └── nav-badge.js    # Badge numérico en el icono de compra
 │   └── tests/
-│       ├── conftest.py         # Fixtures compartidos (cliente, usuario, receta)
-│       ├── test_auth.py        # Tests de registro y login
-│       ├── test_recipes.py     # Tests CRUD de recetas
-│       ├── test_inventory.py   # Tests CRUD de inventario y lista de la compra
-│       └── test_features.py    # Tests de favoritos y visibilidad pública
-├── terraform-appservice/       # Infraestructura principal en Azure
-├── terraform-state-bootstrap/  # Storage Account para el estado remoto de Terraform
-└── .github/workflows/          # Pipelines de CI/CD
-    ├── tests.yml               # Ejecuta los tests en cada PR y push a main
-    ├── deploy-backend.yml      # Despliega el backend en cada push a main
-    └── infrastructure.yml      # Aplica cambios de infraestructura (manual)
+│       ├── conftest.py             # Fixtures: client, new_user, auth_headers, recipe, inventory_item
+│       ├── test_auth.py            # Registro, login, hash de contraseñas
+│       ├── test_auth_required.py   # Endpoints protegidos (403 sin token, 401 token inválido)
+│       ├── test_recipes.py         # CRUD de recetas + casos 404
+│       ├── test_inventory.py       # CRUD de inventario, lista de la compra, casos 404
+│       ├── test_cook.py            # Lógica de cocinar: descontar stock, conversión de unidades
+│       ├── test_features.py        # Favoritos, visibilidad pública, planificación, low-stock
+│       ├── test_security.py        # Aislamiento entre usuarios (recetas e inventario)
+│       ├── test_validation.py      # Validación de entrada (límites, tipos, duplicados)
+│       └── test_image_validation.py# Validación de imágenes (magic bytes, tamaño, re-codificación)
+├── terraform-appservice/           # Infraestructura principal en Azure
+├── terraform-state-bootstrap/      # Storage Account para el estado remoto de Terraform
+└── .github/workflows/
+    ├── tests.yml                   # Tests en cada push a main/mario-dev y en PRs
+    ├── deploy-backend.yml          # Despliega backend en cada push a main
+    ├── deploy-frontend.yml         # Despliega frontend en cada push a main
+    └── infrastructure.yml          # Aplica cambios de infraestructura (manual)
 ```
+
+---
+
+## Stack tecnológico
+
+| Capa | Tecnología |
+|---|---|
+| Backend | Python 3.11 · FastAPI · SQLAlchemy · Pydantic v2 |
+| Base de datos | PostgreSQL 16 (producción) · SQLite (tests) |
+| Autenticación | PyJWT (HS256) · bcrypt (passlib) |
+| Rate limiting | slowapi |
+| Almacenamiento de imágenes | Azure Blob Storage · Pillow (re-codificación JPEG) |
+| Frontend | HTML/CSS/JS vanilla · Jinja2 |
+| Infraestructura | Azure App Service · Terraform |
+| CI/CD | GitHub Actions · OIDC · Managed Identity |
+| Monitorización | Azure Application Insights · Log Analytics |
 
 ---
 
@@ -113,7 +164,7 @@ En producción, Terraform genera y configura automáticamente todos estos valore
 
 ### Requisitos previos
 - Python 3.11+
-- PostgreSQL (o usar SQLite solo para tests)
+- PostgreSQL (o usar SQLite solo para tests, sin configurar nada)
 
 ### Instalación
 
@@ -146,7 +197,7 @@ La aplicación estará disponible en `http://localhost:8000`.
 
 ## Tests
 
-Los tests usan **SQLite en memoria** y no necesitan ninguna infraestructura externa.
+Los tests usan **SQLite** y no necesitan ninguna infraestructura externa.
 
 ```bash
 cd app
@@ -154,9 +205,27 @@ pip install -r requirements-test.txt
 pytest tests/ -v
 ```
 
-Cobertura actual: **19 tests** — autenticación, recetas (CRUD), inventario (CRUD), features (favoritos, visibilidad pública).
+Con reporte de cobertura:
 
-El workflow de GitHub Actions ejecuta los tests automáticamente en cada PR y push a `main`.
+```bash
+pytest tests/ -v --cov=. --cov-report=term-missing
+```
+
+**63 tests** organizados en 9 módulos:
+
+| Módulo | Qué cubre |
+|---|---|
+| `test_auth.py` | Hash de contraseñas, registro, login correcto e incorrecto |
+| `test_auth_required.py` | 403 sin token, 401 con token inválido en todos los endpoints protegidos |
+| `test_recipes.py` | CRUD completo de recetas, casos 404 para ID inexistente, preservación de favorito al editar |
+| `test_inventory.py` | CRUD de inventario, lista de la compra, casos 404 para ID inexistente |
+| `test_cook.py` | Descontar stock, operación atómica (fallo parcial no descuenta nada), conversión de unidades, receta inexistente |
+| `test_features.py` | Toggle favorito/plan (idempotencia), visibilidad pública/privada, badge de stock bajo |
+| `test_security.py` | Aislamiento completo: usuario B no puede leer, modificar ni eliminar datos del usuario A |
+| `test_validation.py` | Registro duplicado, cantidades negativas/inválidas, campos fuera de rango (servings, rating, prep_time), longitudes máximas |
+| `test_image_validation.py` | Magic bytes, tamaño máximo (5 MB), JPEG/PNG/WebP válidos re-codificados a JPEG, archivos corruptos |
+
+El workflow de GitHub Actions ejecuta los tests automáticamente en cada push a `main` o `mario-dev` y en cada PR hacia `main`.
 
 ---
 
@@ -199,7 +268,7 @@ terraform init
 terraform apply
 ```
 
-Si el nombre `tfstaterecipevault` ya está en uso (es globalmente único), cámbialo en `terraform-state-bootstrap/terraform.tfvars.example` antes de aplicar.
+Si el nombre `tfstaterecipevault` ya está en uso, cámbialo en `terraform-state-bootstrap/terraform.tfvars.example` antes de aplicar.
 
 ### 5. Infraestructura principal
 
@@ -218,8 +287,6 @@ Terraform crea y configura automáticamente:
 - Key Vault con RBAC
 - Managed Identity con roles asignados (Storage Blob Data Contributor, Key Vault Secrets User)
 - JWT secret generado aleatoriamente
-
-Al terminar, Terraform muestra los outputs con la URL de la app y los nombres de los recursos.
 
 ### 6. Configurar los secretos de GitHub para CI/CD
 
@@ -247,23 +314,35 @@ GitHub Actions ejecutará los tests y, si pasan, desplegará automáticamente al
 
 ### Autenticación
 - Contraseñas hasheadas con **bcrypt**
-- Sesiones mediante **JWT** (HS256), firmados con secreto generado aleatoriamente por Terraform
+- Sesiones mediante **JWT** (HS256), firmados con secreto generado aleatoriamente por Terraform; expiración de 1 semana
 - Token enviado en cabecera `Authorization: Bearer <token>`
+
+### Rate limiting
+- Registro: **5 peticiones/minuto** por IP
+- Login: **10 peticiones/minuto** por IP
+- Recetas compartidas (endpoint público): **30 peticiones/minuto** por IP
+
+### Validación de imágenes
+- Verificación de **magic bytes** reales del archivo (no se confía en el Content-Type del cliente)
+- Re-codificación con Pillow a JPEG: elimina metadatos, payloads embebidos y canales EXIF potencialmente maliciosos
+- Límite de **5 MB** y límite de megapíxeles para evitar ataques de descompresión (*decompression bomb*)
+- Formatos aceptados: JPEG, PNG y WebP
 
 ### Infraestructura
 - **Managed Identity** (OIDC): el App Service accede a Storage y Key Vault sin credenciales; GitHub Actions se autentica en Azure sin contraseñas almacenadas
 - **HTTPS obligatorio**: `https_only = true` en el App Service, TLS 1.2 mínimo
-- **Aislamiento de red**: PostgreSQL solo acepta conexiones desde servicios Azure (`AllowAzureServices`)
-- **RBAC en Key Vault**: acceso al vault con permisos mínimos (`Key Vault Secrets User`)
+- **Aislamiento de red**: PostgreSQL solo acepta conexiones desde servicios Azure
+- **RBAC en Key Vault**: acceso con permisos mínimos (`Key Vault Secrets User`)
 
 ### Políticas de Azure
-- **Política HTTPS en Blob Storage**: obliga a que todo el tráfico hacia el Storage Account use HTTPS, bloqueando HTTP sin cifrar
-- **Política de tags obligatorios**: todos los recursos deben tener tags `Project`, `Environment`, `Owner`, `CostCenter` y `ManagedBy`, lo que permite auditoría de costos e identificación de responsables
+- **Política HTTPS en Blob Storage**: bloquea tráfico HTTP sin cifrar hacia el Storage Account
+- **Política de tags obligatorios**: todos los recursos deben tener tags `Project`, `Environment`, `Owner`, `CostCenter` y `ManagedBy`
 
 ### Código
-- Validación de entrada en todos los endpoints con Pydantic
-- Aislamiento por usuario: cada consulta filtra por `user_id` extraído del JWT, sin confiar en el cliente
-- Recetas públicas/privadas: endpoint dedicado para cambiar visibilidad, independiente de la edición
+- Todos los endpoints autenticados verifican que el recurso pertenece al `user_id` extraído del JWT, no del cliente
+- Los campos `favorite`, `image` y `planned_to_cook` solo se modifican por sus endpoints dedicados; la edición de receta nunca los toca
+- Prevención de XSS: toda salida de datos de usuario en el frontend pasa por la función `esc()`
+- Índices de base de datos en `user_id` de recetas e inventario para evitar escaneos completos de tabla
 
 ---
 
@@ -287,13 +366,51 @@ traces
 
 ---
 
+## Bugs encontrados y solucionados
+
+Durante el desarrollo y las rondas de auditoría se detectaron y corrigieron los siguientes problemas:
+
+### Editar una receta reseteaba el favorito y el estado "quiero cocinarla"
+**Problema:** el formulario de edición enviaba siempre `favorite: false` y `planned_to_cook: false` en el payload. La función `update_recipe` los aplicaba, borrando cualquier marcado previo del usuario.  
+**Solución:** `update_recipe` ignora explícitamente `image`, `favorite` y `planned_to_cook`; solo los endpoints dedicados (`/favorite`, `/plan`, `/image`) pueden cambiarlos.
+
+### El endpoint `/cook` devolvía 400 en vez de 404 para recetas inexistentes
+**Problema:** `consume_ingredients_for_recipe` devolvía `{"success": false, "error": "..."}` cuando la receta no existía, y el endpoint respondía con un 400 genérico.  
+**Solución:** el endpoint comprueba la existencia de la receta antes de llamar a la función de consumo y devuelve 404 si no existe.
+
+### Valores de dificultad no estándar en base de datos crasheaban la app
+**Problema:** si un registro en la BD tenía un valor de `difficulty` distinto de "Fácil", "Media" o "Difícil" (ej. datos migrados), Pydantic lanzaba una excepción al construir el modelo y devolvía un 500.  
+**Solución:** `_recipe_row_to_model` sanitiza el valor antes de pasarlo a Pydantic; los inválidos se normalizan a "Media". Además se añadió un `field_validator` en el modelo para rechazar valores fuera del conjunto válido en la entrada.
+
+### El cálculo de stock bajo dependía del cliente, no del servidor
+**Problema:** `inventory.js` calculaba localmente si un ingrediente estaba en stock bajo comparando cantidades numéricas, sin tener en cuenta la unidad del umbral. Esto producía resultados incorrectos cuando las unidades diferían (ej. threshold en kg, stock en g).  
+**Solución:** el frontend ahora consulta el endpoint `/api/inventory/low-stock` (que usa la lógica de conversión de unidades del servidor) y mantiene un `Set` de IDs en stock bajo para renderizar la UI.
+
+### El endpoint público de recetas compartidas no tenía rate limit
+**Problema:** `/api/shared/{recipe_id}` era el único endpoint de la API accesible sin autenticación y no tenía ningún límite de peticiones, dejándolo expuesto a scraping masivo.  
+**Solución:** añadido `@limiter.limit("30/minute")` al igual que los endpoints de registro y login.
+
+### Fallos de red en el inventario producían un estado vacío silencioso
+**Problema:** `loadInventory()` en `inventory.js` no tenía manejo de errores. Si la llamada a la API fallaba (ej. timeout), la tabla se quedaba vacía sin ningún mensaje al usuario.  
+**Solución:** añadido `try/catch` que muestra un mensaje de error explícito en la tabla cuando la carga falla.
+
+### Código muerto en `api.js` (`uploadRecipeImage`)
+**Problema:** `api.js` definía un método `uploadRecipeImage` que nunca se llamaba; `detail.js` usaba `fetch` directamente para la subida de imágenes.  
+**Solución:** método eliminado.
+
+### Búsqueda sin límite de longitud en el frontend y el backend
+**Problema:** el campo de búsqueda en `index.html` no tenía `maxlength`, y el parámetro `q` en el backend tampoco se truncaba, permitiendo consultas SQL con cadenas arbitrariamente largas.  
+**Solución:** añadido `maxlength="200"` al input HTML y truncado del parámetro en el servidor antes de usarlo en la query.
+
+---
+
 ## Resolución de problemas
 
 ### La app no arranca / error 500 al abrir
 
 **Causa más común:** las variables de entorno no están configuradas.
 
-Comprueba en Azure Portal → App Service → Environment variables que existen `DATABASE_URL`, `JWT_SECRET`, `BLOB_ACCOUNT_URL` y `BLOB_CONTAINER`. Si falta alguna, significa que Terraform no aplicó correctamente — vuelve a ejecutar `terraform apply`.
+Comprueba en Azure Portal → App Service → Environment variables que existen `DATABASE_URL`, `JWT_SECRET`, `BLOB_ACCOUNT_URL` y `BLOB_CONTAINER`. Si falta alguna, vuelve a ejecutar `terraform apply`.
 
 Para ver el error exacto: App Service → **Log stream** (en tiempo real) o App Service → **Diagnose and solve problems**.
 
@@ -303,7 +420,6 @@ Para ver el error exacto: App Service → **Log stream** (en tiempo real) o App 
 
 **Causa:** los secretos de GitHub (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) no están configurados o son incorrectos.
 
-Verifica los valores con:
 ```bash
 az account show --query "{tenantId:tenantId, subscriptionId:id}" -o table
 az identity show --name recipevault-api-dev-id --resource-group recipevault-dev-rg --query clientId -o tsv
@@ -311,11 +427,12 @@ az identity show --name recipevault-api-dev-id --resource-group recipevault-dev-
 
 ---
 
-### `terraform apply` falla con "already exists" o conflicto de nombre
+### `terraform apply` falla con "already exists"
 
-**Causa:** los nombres del Storage Account y del App Service son globalmente únicos en Azure. Si ya existen de un deploy anterior o los usa otra cuenta, cambia los valores por defecto en `terraform-appservice/variables.tf`:
+**Causa:** los nombres del Storage Account y del App Service son globalmente únicos en Azure.
 
 ```hcl
+# terraform-appservice/variables.tf
 variable "storage_account_name" {
   default = "recipevaultimgdev"   # ← cámbialo por algo único
 }
@@ -328,10 +445,11 @@ variable "app_service_name" {
 
 ### No aparecen logs en Application Insights
 
-1. Comprueba que `APPLICATIONINSIGHTS_CONNECTION_STRING` está en las variables de entorno del App Service
+1. Comprueba que `APPLICATIONINSIGHTS_CONNECTION_STRING` está en las variables del App Service
 2. Visita la app y realiza alguna acción (login, crear receta)
-3. Espera 2-5 minutos (hay delay de ingesta)
+3. Espera 2–5 minutos (hay delay de ingesta)
 4. Ejecuta la query sin filtro de tiempo:
+
 ```kusto
 traces
 | order by timestamp desc
@@ -342,20 +460,18 @@ traces
 
 ### Los tests fallan localmente
 
-Asegúrate de estar en el directorio correcto y de tener las dependencias de test instaladas:
-
 ```bash
 cd app
 pip install -r requirements-test.txt
 pytest tests/ -v
 ```
 
-Los tests no necesitan base de datos ni Azure — usan SQLite en memoria automáticamente.
+Los tests no necesitan base de datos ni Azure — usan SQLite automáticamente.
 
 ---
 
 ### Error al subir imágenes (Blob Storage)
 
-**Causa:** la Managed Identity del App Service no tiene el rol `Storage Blob Data Contributor` en el Storage Account.
+**Causa:** la Managed Identity no tiene el rol `Storage Blob Data Contributor` en el Storage Account.
 
-Verifica en Azure Portal → Storage Account → Access Control (IAM) → Role assignments que aparece la identidad `recipevault-api-dev-id` con ese rol. Si no aparece, vuelve a ejecutar `terraform apply`.
+Verifica en Azure Portal → Storage Account → Access Control (IAM) → Role assignments que aparece `recipevault-api-dev-id` con ese rol. Si no aparece, ejecuta `terraform apply`.
