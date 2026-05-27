@@ -2,17 +2,19 @@ import logging
 import os
 from pathlib import Path
 
+# Debe ir antes de importar cualquier módulo de Azure
+os.environ.setdefault("AZURE_LOG_LEVEL", "WARNING")
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
-
-# Silenciar loggers internos del SDK de Azure que generan demasiado ruido
-logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
-logging.getLogger("azure.monitor.opentelemetry.exporter").setLevel(logging.WARNING)
-logging.getLogger("azure.core").setLevel(logging.WARNING)
 
 if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     from azure.monitor.opentelemetry import configure_azure_monitor
     configure_azure_monitor()
+    # Silenciar después de configure_azure_monitor para que no lo revierta
+    logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+    logging.getLogger("azure.monitor.opentelemetry.exporter").setLevel(logging.WARNING)
+    logging.getLogger("azure.core").setLevel(logging.WARNING)
     logger.info("Azure Monitor configurado")
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
@@ -41,12 +43,20 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
 
 @app.on_event("startup")
 def startup():
-    logger.info("Iniciando RecipeVault...")
+    logger.info("=" * 60)
+    logger.info("RecipeVault arrancando")
+    logger.info("=" * 60)
+    logger.info("Tipos de log activos:")
+    logger.info("  INFO    — operaciones normales: registro, login, recetas, inventario")
+    logger.info("  WARNING — accesos fallidos, credenciales incorrectas, recursos no encontrados")
+    logger.info("  ERROR   — fallos críticos: base de datos, excepciones no controladas")
+    logger.info("=" * 60)
     try:
         init_db()
         logger.info("Base de datos inicializada correctamente")
     except Exception:
-        logger.exception("Error al inicializar la base de datos")
+        logger.error("Error crítico al inicializar la base de datos — la app no puede arrancar")
+        logger.exception("Detalle del error:")
         raise
 
 
@@ -244,12 +254,14 @@ def api_update_inventory_item(item_id: int, payload: dict, user_id: int = Depend
     threshold = float(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
     if not name or not unit or quantity < 0:
+        logger.warning("Datos de inventario no válidos — user=%s payload=%s", user_id, payload)
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = update_inventory_item(
         item_id=item_id, user_id=user_id, name=name, quantity=quantity,
         unit=unit, low_stock_threshold=threshold, low_stock_unit=threshold_unit,
     )
     if not item:
+        logger.error("Ingrediente id=%s no encontrado al actualizar (user=%s)", item_id, user_id)
         raise HTTPException(status_code=404, detail="Ingrediente no encontrado")
     return item
 
