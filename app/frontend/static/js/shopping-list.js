@@ -3,7 +3,23 @@
   const planned = document.getElementById('plannedRecipesList');
   const missing = document.getElementById('missingIngredientsList');
 
-  const data = await api.shoppingList();
+  const loadingMsg = '<p class="muted">Cargando...</p>';
+  if (low) low.innerHTML = loadingMsg;
+  if (planned) planned.innerHTML = loadingMsg;
+  if (missing) missing.innerHTML = loadingMsg;
+
+  let data;
+  try {
+    data = await api.shoppingList();
+  } catch {
+    const msg = '<p class="muted">No se ha podido cargar la lista. Inténtalo de nuevo.</p>';
+    if (low) low.innerHTML = msg;
+    if (planned) planned.innerHTML = '';
+    if (missing) missing.innerHTML = '';
+    return;
+  }
+
+  if (!data) return;
 
   low.innerHTML = data.low_stock.length
     ? data.low_stock.map(i => `

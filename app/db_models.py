@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -16,7 +16,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     recipes = relationship("Recipe", back_populates="owner", cascade="all, delete-orphan")
     inventory_items = relationship("InventoryItem", back_populates="owner", cascade="all, delete-orphan")
@@ -43,7 +43,7 @@ class Recipe(Base):
     difficulty = Column(String(20), default="Media")
     notes = Column(Text, default="")
     rating = Column(Float, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     owner = relationship("User", back_populates="recipes")
 
@@ -53,7 +53,7 @@ class InventoryItem(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    name = Column(String(200), nullable=False)
+    name = Column(String(100), nullable=False)
     quantity = Column(Float, default=0)
     unit = Column(String(20), default="")
     low_stock_threshold = Column(Float, default=5)
