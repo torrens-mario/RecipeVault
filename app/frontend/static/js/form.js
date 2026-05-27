@@ -45,6 +45,11 @@ async function prefillForm() {
 
 form?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const submitBtn = form.querySelector('[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Guardando...';
+
   const fd = new FormData(form);
   const payload = {
     title: String(fd.get('title') || '').trim(),
@@ -68,14 +73,20 @@ form?.addEventListener('submit', async (e) => {
     image: ''
   };
 
-  if (isEditing) {
-    await api.updateRecipe(window.EDIT_RECIPE_ID, payload);
-    showToast('Receta actualizada correctamente');
-    window.location.href = `/recipes/${window.EDIT_RECIPE_ID}`;
-  } else {
-    const created = await api.createRecipe(payload);
-    showToast('Receta creada correctamente');
-    window.location.href = `/recipes/${created.id}`;
+  try {
+    if (isEditing) {
+      await api.updateRecipe(window.EDIT_RECIPE_ID, payload);
+      showToast('Receta actualizada correctamente');
+      window.location.href = `/recipes/${window.EDIT_RECIPE_ID}`;
+    } else {
+      const created = await api.createRecipe(payload);
+      showToast('Receta creada correctamente');
+      window.location.href = `/recipes/${created.id}`;
+    }
+  } catch {
+    showToast('Error al guardar la receta. Inténtalo de nuevo.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
   }
 });
 
