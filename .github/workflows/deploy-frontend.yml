@@ -49,13 +49,10 @@ jobs:
       - name: Desplegar a App Service
         run: |
           for i in {1..3}; do
-            az webapp deploy \
+            az webapp deployment source config-zip \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --name ${{ env.APP_SERVICE_NAME }} \
-              --src-path deploy.zip \
-              --type zip \
-              --build-remote true \
-              --timeout 600 && break
+              --src deploy.zip && break
             echo "Intento $i fallido, esperando 60s..."
             sleep 60
           done
