@@ -30,6 +30,12 @@ def _make_png_bytes(width=10, height=10) -> bytes:
     return buf.getvalue()
 
 
+def _make_webp_bytes(width=10, height=10) -> bytes:
+    buf = io.BytesIO()
+    Image.new("RGB", (width, height), color=(50, 100, 150)).save(buf, format="WEBP")
+    return buf.getvalue()
+
+
 def test_jpeg_valido_devuelve_bytes():
     result = validate_and_sanitize_image(_make_jpeg_bytes())
     assert isinstance(result, bytes)
@@ -66,3 +72,8 @@ def test_jpeg_corrupto_lanza_error():
 def test_texto_plano_lanza_error():
     with pytest.raises(ValueError):
         validate_and_sanitize_image(b'esto no es una imagen')
+
+
+def test_webp_valido_se_recodifica_a_jpeg():
+    result = validate_and_sanitize_image(_make_webp_bytes())
+    assert result[:3] == b'\xff\xd8\xff'

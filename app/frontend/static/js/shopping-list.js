@@ -19,7 +19,13 @@
     return;
   }
 
-  if (!data) return;
+  if (!data) {
+    const msg = '<p class="muted">No se ha podido cargar la lista. Inténtalo de nuevo.</p>';
+    if (low) low.innerHTML = msg;
+    if (planned) planned.innerHTML = '';
+    if (missing) missing.innerHTML = '';
+    return;
+  }
 
   low.innerHTML = data.low_stock.length
     ? data.low_stock.map(i => `

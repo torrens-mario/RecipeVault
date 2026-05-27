@@ -79,8 +79,6 @@ form?.addEventListener('submit', async (e) => {
     }),
     steps: String(fd.get('steps') || '').split('\n').map(s => s.trim()).filter(Boolean),
     tags: String(fd.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean),
-    favorite: false,
-    image: ''
   };
 
   try {

@@ -109,3 +109,14 @@ def test_inventario_unit_demasiado_larga_devuelve_400(client, auth_headers):
         "low_stock_unit": "g",
     })
     assert r.status_code == 400
+
+
+def test_inventario_low_stock_unit_demasiado_larga_devuelve_400(client, auth_headers):
+    r = client.post("/api/inventory", headers=auth_headers, json={
+        "name": "Test",
+        "quantity": 100,
+        "unit": "g",
+        "low_stock_threshold": 5,
+        "low_stock_unit": "x" * 21,
+    })
+    assert r.status_code == 400

@@ -50,17 +50,6 @@ const api = {
     return res.json();
   },
 
-  async uploadRecipeImage(id, file) {
-    const form = new FormData();
-    form.append('file', file);
-    const res = await _fetch(`/api/recipes/${id}/image`, {
-      method: 'POST',
-      headers: _authHeaders(),
-      body: form
-    });
-    return res ? res.json() : null;
-  },
-
   async toggleFavorite(id) {
     const res = await _fetch(`/api/recipes/${id}/favorite`, { method: 'POST', headers: _authHeaders() });
     if (!res || !res.ok) throw new Error('Error al actualizar favorito');

@@ -61,6 +61,48 @@ def test_usuario_b_no_puede_eliminar_receta_de_a(client):
     assert r.status_code == 404
 
 
+def test_usuario_b_no_puede_modificar_inventario_de_a(client):
+    headers_a = _register(client)
+    headers_b = _register(client)
+
+    r = client.post("/api/inventory", headers=headers_a, json={
+        "name": "Sal exclusiva",
+        "quantity": 100,
+        "unit": "g",
+        "low_stock_threshold": 10,
+        "low_stock_unit": "g",
+    })
+    assert r.status_code == 201
+    item_id = r.json()["id"]
+
+    r2 = client.put(f"/api/inventory/{item_id}", headers=headers_b, json={
+        "name": "Sal hackeada",
+        "quantity": 999,
+        "unit": "g",
+        "low_stock_threshold": 10,
+        "low_stock_unit": "g",
+    })
+    assert r2.status_code == 404
+
+
+def test_usuario_b_no_puede_eliminar_inventario_de_a(client):
+    headers_a = _register(client)
+    headers_b = _register(client)
+
+    r = client.post("/api/inventory", headers=headers_a, json={
+        "name": "Pimienta exclusiva",
+        "quantity": 50,
+        "unit": "g",
+        "low_stock_threshold": 5,
+        "low_stock_unit": "g",
+    })
+    assert r.status_code == 201
+    item_id = r.json()["id"]
+
+    r2 = client.delete(f"/api/inventory/{item_id}", headers=headers_b)
+    assert r2.status_code == 404
+
+
 def test_usuario_b_no_ve_inventario_de_a(client):
     headers_a = _register(client)
     headers_b = _register(client)

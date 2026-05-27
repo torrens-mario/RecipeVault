@@ -18,8 +18,8 @@
         </select>
       </div>
       <div class="form-row-2">
-        <input name="prep_time" type="number" min="0" placeholder="Preparación (min)">
-        <input name="cook_time" type="number" min="0" placeholder="Cocción (min)">
+        <input name="prep_time" type="number" min="0" max="1440" placeholder="Preparación (min)">
+        <input name="cook_time" type="number" min="0" max="1440" placeholder="Cocción (min)">
       </div>
       <div class="form-field">
         <label class="form-label">Valoración</label>
@@ -32,9 +32,9 @@
         </div>
         <input type="hidden" name="rating" id="ratingHidden" value="0">
       </div>
-      <textarea name="ingredients" placeholder="Ingredientes, uno por línea. Ej: 4 uds Huevos o 3 cda Pesto"></textarea>
-      <textarea name="steps" placeholder="Pasos, uno por línea"></textarea>
-      <input name="tags" placeholder="Tags separadas por coma">
+      <textarea name="ingredients" maxlength="10000" placeholder="Ingredientes, uno por línea. Ej: 4 uds Huevos o 3 cda Pesto"></textarea>
+      <textarea name="steps" maxlength="20000" placeholder="Pasos, uno por línea"></textarea>
+      <input name="tags" maxlength="2500" placeholder="Tags separadas por coma">
       <textarea name="notes" maxlength="5000" placeholder="Notas personales (trucos, variaciones, recuerdos...)"></textarea>
       <button type="submit" class="btn primary" id="submitBtn">Guardar receta</button>
     </form>
