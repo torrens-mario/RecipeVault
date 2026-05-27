@@ -126,6 +126,10 @@ invSearch?.addEventListener('input', () => renderTable(window.__inventoryItems |
 
 addForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const btn = addForm.querySelector('[type="submit"]');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Añadiendo...';
   const fd = new FormData(addForm);
   const payload = {
     name: fd.get('name'),
@@ -134,14 +138,25 @@ addForm?.addEventListener('submit', async (e) => {
     low_stock_threshold: Number(fd.get('low_stock_threshold') || 5),
     low_stock_unit: fd.get('low_stock_unit') || fd.get('unit'),
   };
-  await api.createInventoryItem(payload);
-  closeAddModal();
-  showToast('Ingrediente añadido');
-  loadInventory();
+  try {
+    await api.createInventoryItem(payload);
+    closeAddModal();
+    showToast('Ingrediente añadido');
+    loadInventory();
+  } catch {
+    showToast('Error al añadir el ingrediente. Inténtalo de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 
 editForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const btn = editForm.querySelector('[type="submit"]');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
   const fd = new FormData(editForm);
   const id = Number(fd.get('id'));
   const payload = {
@@ -151,10 +166,17 @@ editForm?.addEventListener('submit', async (e) => {
     low_stock_threshold: Number(fd.get('low_stock_threshold') || 5),
     low_stock_unit: fd.get('low_stock_unit') || fd.get('unit'),
   };
-  await api.updateInventoryItem(id, payload);
-  closeEditModal();
-  showToast('Ingrediente actualizado');
-  loadInventory();
+  try {
+    await api.updateInventoryItem(id, payload);
+    closeEditModal();
+    showToast('Ingrediente actualizado');
+    loadInventory();
+  } catch {
+    showToast('Error al actualizar el ingrediente. Inténtalo de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 
 tbody?.addEventListener('click', async (e) => {
