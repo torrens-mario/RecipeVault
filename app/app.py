@@ -97,18 +97,22 @@ def shopping_list_page(request: Request):
 def api_register(payload: UserRegister):
     user = create_user(payload.username, payload.email, payload.password)
     if not user:
+        logger.warning("Intento de registro fallido — usuario o email ya existe: %s", payload.email)
         raise HTTPException(status_code=400, detail="El usuario o email ya existe")
     seed_default_recipes(user["id"])
     seed_default_inventory(user["id"])
     token = create_access_token(user["id"])
+    logger.info("Nuevo usuario registrado: %s (id=%s)", payload.username, user["id"])
     return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "username": user["username"]}
 
 @app.post("/api/auth/login")
 def api_login(payload: UserLogin):
     user = authenticate_user(payload.email, payload.password)
     if not user:
+        logger.warning("Intento de login fallido para: %s", payload.email)
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
     token = create_access_token(user["id"])
+    logger.info("Login correcto: %s (id=%s)", user["username"], user["id"])
     return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "username": user["username"]}
 
 @app.get("/api/auth/me")
@@ -134,7 +138,9 @@ def api_get_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):
 
 @app.post("/api/recipes", status_code=201)
 def api_create_recipe(payload: RecipeCreate, user_id: int = Depends(get_current_user_id)):
-    return create_recipe(payload, user_id).model_dump()
+    recipe = create_recipe(payload, user_id)
+    logger.info("Receta creada: '%s' (id=%s, user=%s)", recipe.title, recipe.id, user_id)
+    return recipe.model_dump()
 
 @app.put("/api/recipes/{recipe_id}")
 def api_update_recipe(recipe_id: int, payload: RecipeUpdate, user_id: int = Depends(get_current_user_id)):
@@ -175,6 +181,7 @@ def api_toggle_plan(recipe_id: int, user_id: int = Depends(get_current_user_id))
 def api_delete_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):
     if not delete_recipe(recipe_id, user_id):
         raise HTTPException(status_code=404, detail="Receta no encontrada")
+    logger.info("Receta eliminada: id=%s (user=%s)", recipe_id, user_id)
 
 @app.post("/api/recipes/{recipe_id}/public")
 def api_toggle_public(recipe_id: int, user_id: int = Depends(get_current_user_id)):
@@ -187,7 +194,9 @@ def api_toggle_public(recipe_id: int, user_id: int = Depends(get_current_user_id
 def api_cook_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):
     result = consume_ingredients_for_recipe(recipe_id, user_id)
     if not result.get("success"):
+        logger.warning("Cocinar receta id=%s fallido (user=%s): ingredientes insuficientes", recipe_id, user_id)
         return JSONResponse(status_code=400, content=result)
+    logger.info("Receta cocinada: id=%s (user=%s)", recipe_id, user_id)
     result["low_stock"] = list_low_stock_items(user_id)
     return result
 
@@ -215,10 +224,12 @@ def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
     if not name or not unit or quantity < 0:
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
-    return create_inventory_item(
+    item = create_inventory_item(
         user_id=user_id, name=name, quantity=quantity, unit=unit,
         low_stock_threshold=threshold, low_stock_unit=threshold_unit,
     )
+    logger.info("Ingrediente añadido al inventario: '%s' %s %s (user=%s)", name, quantity, unit, user_id)
+    return item
 
 @app.put("/api/inventory/{item_id}")
 def api_update_inventory_item(item_id: int, payload: dict, user_id: int = Depends(get_current_user_id)):
