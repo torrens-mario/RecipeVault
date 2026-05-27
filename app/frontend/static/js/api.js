@@ -123,7 +123,9 @@ const api = {
 
   async cookRecipe(id) {
     const res = await _fetch(`/api/recipes/${id}/cook`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res) return null;
+    if (res.status === 404) throw new Error('Receta no encontrada');
+    return res.json();
   },
 
   async togglePublic(id) {

@@ -84,3 +84,28 @@ def test_busqueda_sin_resultados(client, auth_headers):
     r = client.get("/api/recipes?q=xyzzy_inexistente_42", headers=auth_headers)
     assert r.status_code == 200
     assert r.json() == []
+
+
+def test_receta_dificultad_invalida_devuelve_422(client, auth_headers):
+    r = client.post("/api/recipes", headers=auth_headers, json={
+        "title": "Receta test",
+        "description": "",
+        "category": "Test",
+        "servings": 2,
+        "ingredients": [],
+        "steps": [],
+        "tags": [],
+        "difficulty": "Imposible",
+    })
+    assert r.status_code == 422
+
+
+def test_inventario_unit_demasiado_larga_devuelve_400(client, auth_headers):
+    r = client.post("/api/inventory", headers=auth_headers, json={
+        "name": "Test",
+        "quantity": 100,
+        "unit": "x" * 21,
+        "low_stock_threshold": 5,
+        "low_stock_unit": "g",
+    })
+    assert r.status_code == 400

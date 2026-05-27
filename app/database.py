@@ -323,9 +323,9 @@ def update_recipe(recipe_id: int, payload: RecipeUpdate, user_id: int) -> Option
             return None
         data = payload.model_dump()
         for field, value in data.items():
-            if field == "image":
+            if field in ("image", "favorite", "planned_to_cook"):
                 continue
-            if value is not None or field in ("favorite", "planned_to_cook", "is_public"):
+            if value is not None:
                 setattr(row, field, value)
         if not row.image:
             row.image = _pick_recipe_image(row.title or "", row.category or "", row.ingredients or [])
