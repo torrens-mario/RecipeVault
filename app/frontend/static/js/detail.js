@@ -2,7 +2,17 @@
   const container = document.getElementById('detail');
   if (!container) return;
 
-  const r = await api.getRecipe(window.RECIPE_ID);
+  let r;
+  try {
+    r = await api.getRecipe(window.RECIPE_ID);
+  } catch {
+    container.innerHTML = '<p class="muted">No se ha podido cargar la receta. <a href="/">Volver al inicio</a></p>';
+    return;
+  }
+  if (!r) {
+    container.innerHTML = '<p class="muted">Receta no encontrada. <a href="/">Volver al inicio</a></p>';
+    return;
+  }
   const shareUrl = `${window.location.origin}/shared/${r.id}`;
 
   function renderStars(rating) {
