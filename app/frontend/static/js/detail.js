@@ -142,11 +142,26 @@
     }
   });
 
-  document.getElementById('deleteBtn')?.addEventListener('click', async () => {
-    if (confirm('¿Seguro que quieres eliminar esta receta? Esta acción no se puede deshacer.')) {
-      await api.deleteRecipe(r.id);
-      showToast('Receta eliminada');
-      window.location.href = '/';
-    }
+  const confirmModal = document.getElementById('confirmDeleteModal');
+  function openConfirmDelete() {
+    confirmModal.classList.add('open');
+    confirmModal.setAttribute('aria-hidden', 'false');
+  }
+  function closeConfirmDelete() {
+    confirmModal.classList.remove('open');
+    confirmModal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.getElementById('deleteBtn')?.addEventListener('click', openConfirmDelete);
+  document.getElementById('confirmDeleteClose')?.addEventListener('click', closeConfirmDelete);
+  document.getElementById('confirmDeleteCancel')?.addEventListener('click', closeConfirmDelete);
+  confirmModal?.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirmDelete(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConfirmDelete(); });
+
+  document.getElementById('confirmDeleteOk')?.addEventListener('click', async () => {
+    closeConfirmDelete();
+    await api.deleteRecipe(r.id);
+    showToast('Receta eliminada');
+    window.location.href = '/';
   });
 })();

@@ -2,6 +2,20 @@
 {% block title %}Detalle receta - RecipeVault{% endblock %}
 {% block content %}
     <div id="detail"></div>
+
+  <div id="confirmDeleteModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteTitle" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title" id="confirmDeleteTitle">Eliminar receta</div>
+        <button type="button" class="modal-close" id="confirmDeleteClose" aria-label="Cerrar">✕</button>
+      </div>
+      <p style="margin:12px 0 20px;">¿Seguro que quieres eliminar esta receta? Esta acción no se puede deshacer.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="confirmDeleteCancel">Cancelar</button>
+        <button type="button" class="btn primary" id="confirmDeleteOk" style="background:#c9435b;border-color:#c9435b;">Eliminar</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 {% block scripts %}
   <script>window.RECIPE_ID = {{ recipe_id }};</script>
