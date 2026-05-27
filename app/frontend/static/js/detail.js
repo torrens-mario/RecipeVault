@@ -23,24 +23,24 @@
 
   container.innerHTML = `
     <article class="card detail-card">
-      <img class="detail-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
-      <h1 style="font-size:1.5rem;margin-bottom:4px;">${r.title}</h1>
+      <img class="detail-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800">
+      <h1 style="font-size:1.5rem;margin-bottom:4px;">${esc(r.title)}</h1>
       <div class="detail-meta">
-        <span class="muted">${r.category} · ${r.servings} raciones</span>
-        <span class="difficulty-badge difficulty-${difficultyClass(r.difficulty)}">${r.difficulty || 'Media'}</span>
+        <span class="muted">${esc(r.category)} · ${r.servings} raciones</span>
+        <span class="difficulty-badge difficulty-${difficultyClass(r.difficulty)}">${esc(r.difficulty || 'Media')}</span>
         ${r.rating > 0 ? `<span class="star-row">${renderStars(r.rating)}</span>` : ''}
       </div>
       ${timeInfo.length ? `<p class="time-info muted">${timeInfo.join(' · ')}</p>` : ''}
-      <p style="margin-top:8px;">${r.description || ''}</p>
+      <p style="margin-top:8px;">${esc(r.description || '')}</p>
       <h3 style="margin-top:14px;">Ingredientes</h3>
       <ul style="margin-left:18px;margin-top:6px;">
-        ${r.ingredients.map(i => `<li>${i.amount || ''} ${i.name}</li>`).join('')}
+        ${r.ingredients.map(i => `<li>${esc(i.amount || '')} ${esc(i.name)}</li>`).join('')}
       </ul>
       <h3 style="margin-top:14px;">Pasos</h3>
       <ol style="margin-left:18px;margin-top:6px;">
-        ${r.steps.map(s => `<li>${s}</li>`).join('')}
+        ${r.steps.map(s => `<li>${esc(s)}</li>`).join('')}
       </ol>
-      ${r.notes ? `<h3 style="margin-top:14px;">Notas</h3><p style="margin-top:6px;font-style:italic;color:#7a5a46;">${r.notes}</p>` : ''}
+      ${r.notes ? `<h3 style="margin-top:14px;">Notas</h3><p style="margin-top:6px;font-style:italic;color:#7a5a46;">${esc(r.notes)}</p>` : ''}
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn primary" id="cookBtn">Cocinar (actualizar inventario)</button>
         <button class="btn secondary" id="favoriteBtn">${r.favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}</button>

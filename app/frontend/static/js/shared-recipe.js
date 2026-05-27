@@ -9,16 +9,16 @@
   container.innerHTML = `
     <article class="card">
       <div class="tag" style="width:max-content;">Receta compartida</div>
-      <h1 style="font-size:1.5rem;">${r.title}</h1>
-      <p class="muted">${r.category} · ${r.servings} raciones</p>
-      <p>${r.description || ''}</p>
+      <h1 style="font-size:1.5rem;">${esc(r.title)}</h1>
+      <p class="muted">${esc(r.category)} · ${r.servings} raciones</p>
+      <p>${esc(r.description || '')}</p>
       <h3 style="margin-top:14px;">Ingredientes</h3>
       <ul style="margin-left:18px;margin-top:6px;">
-        ${r.ingredients.map(i => `<li>${i.amount || ''} ${i.name}</li>`).join('')}
+        ${r.ingredients.map(i => `<li>${esc(i.amount || '')} ${esc(i.name)}</li>`).join('')}
       </ul>
       <h3 style="margin-top:14px;">Pasos</h3>
       <ol style="margin-left:18px;margin-top:6px;">
-        ${r.steps.map(s => `<li>${s}</li>`).join('')}
+        ${r.steps.map(s => `<li>${esc(s)}</li>`).join('')}
       </ol>
       <div style="margin-top:16px;">
         <a class="btn primary" href="/">Ver todas las recetas</a>
