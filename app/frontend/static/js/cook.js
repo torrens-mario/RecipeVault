@@ -34,9 +34,10 @@
     });
   }
 
+  let attempts = 0;
   const interval = setInterval(() => {
     bind();
     const btn = document.getElementById('cookBtn');
-    if (btn) clearInterval(interval);
+    if (btn || ++attempts >= 20) clearInterval(interval);
   }, 200);
 })();

@@ -44,8 +44,7 @@ jobs:
             --exclude "__pycache__/*" \
             --exclude "venv/*" \
             --exclude ".env*" \
-            --exclude "recipes.json" \
-            --exclude "inventory.json"
+            --exclude "tests/*"
 
       - name: Desplegar a App Service
         run: |

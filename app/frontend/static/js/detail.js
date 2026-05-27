@@ -33,7 +33,7 @@
 
   container.innerHTML = `
     <article class="card detail-card">
-      <img class="detail-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800">
+      <img class="detail-photo" src="${esc(r.image || '')}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">
       <h1 style="font-size:1.5rem;margin-bottom:4px;">${esc(r.title)}</h1>
       <div class="detail-meta">
         <span class="muted">${esc(r.category)} · ${r.servings} raciones</span>
