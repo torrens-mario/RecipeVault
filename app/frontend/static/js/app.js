@@ -2,6 +2,7 @@ const grid = document.getElementById('recipes');
 const search = document.getElementById('search');
 const sortSelect = document.getElementById('sortSelect');
 const filterCategory = document.getElementById('filterCategory');
+const filterDifficulty = document.getElementById('filterDifficulty');
 const filterFavs = document.getElementById('filterFavs');
 const filterPlan = document.getElementById('filterPlan');
 
@@ -19,9 +20,11 @@ function sortRecipes(items) {
 function applyFilters(items) {
   let result = items;
   const cat = filterCategory?.value || '';
+  const diff = filterDifficulty?.value || '';
   const onlyFavs = filterFavs?.dataset.active === 'true';
   const onlyPlan = filterPlan?.dataset.active === 'true';
   if (cat) result = result.filter(r => r.category === cat);
+  if (diff) result = result.filter(r => r.difficulty === diff);
   if (onlyFavs) result = result.filter(r => r.favorite);
   if (onlyPlan) result = result.filter(r => r.planned_to_cook);
   return result;
@@ -102,6 +105,7 @@ search?.addEventListener('input', () => {
 
 sortSelect?.addEventListener('change', () => renderRecipes(window.__recipes || []));
 filterCategory?.addEventListener('change', () => renderRecipes(window.__recipes || []));
+filterDifficulty?.addEventListener('change', () => renderRecipes(window.__recipes || []));
 filterFavs?.addEventListener('click', () => toggleFilterBtn(filterFavs));
 filterPlan?.addEventListener('click', () => toggleFilterBtn(filterPlan));
 
