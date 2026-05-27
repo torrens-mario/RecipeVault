@@ -33,7 +33,8 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al crear la receta');
+    return res.json();
   },
 
   async updateRecipe(id, payload) {
@@ -42,7 +43,8 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar la receta');
+    return res.json();
   },
 
   async uploadRecipeImage(id, file) {
@@ -91,7 +93,8 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al crear el ingrediente');
+    return res.json();
   },
 
   async updateInventoryItem(id, payload) {
@@ -100,7 +103,8 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar el ingrediente');
+    return res.json();
   },
 
   async deleteInventoryItem(id) {
