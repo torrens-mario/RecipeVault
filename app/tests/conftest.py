@@ -13,6 +13,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./test_recipevault.db")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-testing")
 os.environ.setdefault("BLOB_ACCOUNT_URL", "https://test.blob.core.windows.net")
 os.environ.setdefault("BLOB_CONTAINER", "test-container")
+os.environ["RATELIMIT_ENABLED"] = "false"
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

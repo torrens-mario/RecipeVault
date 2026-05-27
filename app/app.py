@@ -23,6 +23,9 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from auth import create_access_token, get_current_user_id
 from database import (
@@ -70,7 +73,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="RecipeVault", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend" / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
@@ -125,7 +131,8 @@ def shopping_list_page(request: Request):
 # ── Auth API ──────────────────────────────────────────────────────────────────
 
 @app.post("/api/auth/register", status_code=201)
-def api_register(payload: UserRegister):
+@limiter.limit("5/minute")
+def api_register(request: Request, payload: UserRegister):
     user = create_user(payload.username, payload.email, payload.password)
     if not user:
         logger.warning("Intento de registro fallido — usuario o email ya existe: %s", payload.email)
@@ -137,7 +144,8 @@ def api_register(payload: UserRegister):
     return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "username": user["username"]}
 
 @app.post("/api/auth/login")
-def api_login(payload: UserLogin):
+@limiter.limit("10/minute")
+def api_login(request: Request, payload: UserLogin):
     user = authenticate_user(payload.email, payload.password)
     if not user:
         logger.warning("Intento de login fallido para: %s", payload.email)
