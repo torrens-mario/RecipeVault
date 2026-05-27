@@ -1,5 +1,7 @@
 import logging
+import math
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 # Debe ir antes de importar cualquier módulo de Azure
@@ -21,6 +23,9 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from auth import create_access_token, get_current_user_id
 from database import (
@@ -32,17 +37,24 @@ from database import (
     update_recipe_image, init_db, seed_default_recipes, seed_default_inventory,
 )
 from models import RecipeCreate, RecipeUpdate, UserLogin, UserRegister
-from storage import upload_recipe_image
+from storage import upload_recipe_image, validate_and_sanitize_image
+
+def _parse_qty(value, default: float = 0.0) -> float:
+    """Parsea un valor numérico de inventario. Rechaza inf, nan, negativos y no-numéricos."""
+    try:
+        v = float(value if value is not None else default)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
+    if not math.isfinite(v) or v < 0:
+        raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
+    return v
+
 
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="RecipeVault")
-
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend" / "static")), name="static")
-templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
 
 
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     logger.info("=" * 60)
     logger.info("RecipeVault arrancando")
     logger.info("=" * 60)
@@ -58,13 +70,23 @@ def startup():
         logger.error("Error crítico al inicializar la base de datos — la app no puede arrancar")
         logger.exception("Detalle del error:")
         raise
+    yield
+
+
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI(title="RecipeVault", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "frontend" / "static")), name="static")
+templates = Jinja2Templates(directory=str(BASE_DIR / "frontend" / "templates"))
 
 
 # ── HTML pages ────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "active_page": "recipes"})
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
@@ -76,22 +98,23 @@ def register_page(request: Request):
 
 @app.get("/recipes/new", response_class=HTMLResponse)
 def new_recipe_page(request: Request):
-    return templates.TemplateResponse("recipe-form.html", {"request": request})
+    return templates.TemplateResponse("recipe-form.html", {"request": request, "active_page": "new_recipe"})
 
 @app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
 def edit_recipe_page(request: Request, recipe_id: int):
-    return templates.TemplateResponse("recipe-form.html", {"request": request, "edit_recipe_id": recipe_id})
+    return templates.TemplateResponse("recipe-form.html", {"request": request, "edit_recipe_id": recipe_id, "active_page": "recipes"})
 
 @app.get("/recipes/{recipe_id}", response_class=HTMLResponse)
 def detail_page(request: Request, recipe_id: int):
-    return templates.TemplateResponse("recipe-detail.html", {"request": request, "recipe_id": recipe_id})
+    return templates.TemplateResponse("recipe-detail.html", {"request": request, "recipe_id": recipe_id, "active_page": "recipes"})
 
 @app.get("/shared/{recipe_id}", response_class=HTMLResponse)
 def shared_recipe_page(request: Request, recipe_id: int):
     return templates.TemplateResponse("shared-recipe.html", {"request": request, "recipe_id": recipe_id})
 
 @app.get("/api/shared/{recipe_id}")
-def api_get_shared_recipe(recipe_id: int):
+@limiter.limit("30/minute")
+def api_get_shared_recipe(request: Request, recipe_id: int):
     recipe = get_recipe_public(recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
@@ -99,17 +122,18 @@ def api_get_shared_recipe(recipe_id: int):
 
 @app.get("/inventory", response_class=HTMLResponse)
 def inventory_page(request: Request):
-    return templates.TemplateResponse("inventory.html", {"request": request})
+    return templates.TemplateResponse("inventory.html", {"request": request, "active_page": "inventory"})
 
 @app.get("/shopping-list", response_class=HTMLResponse)
 def shopping_list_page(request: Request):
-    return templates.TemplateResponse("shopping-list.html", {"request": request})
+    return templates.TemplateResponse("shopping-list.html", {"request": request, "active_page": "shopping"})
 
 
 # ── Auth API ──────────────────────────────────────────────────────────────────
 
 @app.post("/api/auth/register", status_code=201)
-def api_register(payload: UserRegister):
+@limiter.limit("5/minute")
+def api_register(request: Request, payload: UserRegister):
     user = create_user(payload.username, payload.email, payload.password)
     if not user:
         logger.warning("Intento de registro fallido — usuario o email ya existe: %s", payload.email)
@@ -121,7 +145,8 @@ def api_register(payload: UserRegister):
     return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "username": user["username"]}
 
 @app.post("/api/auth/login")
-def api_login(payload: UserLogin):
+@limiter.limit("10/minute")
+def api_login(request: Request, payload: UserLogin):
     user = authenticate_user(payload.email, payload.password)
     if not user:
         logger.warning("Intento de login fallido para: %s", payload.email)
@@ -142,6 +167,8 @@ def api_me(user_id: int = Depends(get_current_user_id)):
 
 @app.get("/api/recipes")
 def api_list_recipes(q: str | None = None, user_id: int = Depends(get_current_user_id)):
+    if q:
+        q = q[:200]
     return [r.model_dump() for r in list_recipes(user_id=user_id, q=q)]
 
 @app.get("/api/recipes/{recipe_id}")
@@ -173,9 +200,18 @@ async def api_upload_recipe_image(
     recipe = get_recipe(recipe_id, user_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
-    data = await file.read()
-    image_url = upload_recipe_image(data, file.content_type or "image/jpeg")
+    data = await file.read(5 * 1024 * 1024 + 1)
+    try:
+        clean_data = validate_and_sanitize_image(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    try:
+        image_url = upload_recipe_image(clean_data)
+    except Exception as e:
+        logger.error("Error al subir imagen a Azure Storage: %s", e)
+        raise HTTPException(status_code=503, detail="Error al subir la imagen. Inténtalo de nuevo.")
     updated = update_recipe_image(recipe_id, user_id, image_url)
+    logger.info("Imagen de receta actualizada: id=%s (user=%s)", recipe_id, user_id)
     return {"image_url": updated.image if updated else image_url}
 
 @app.post("/api/recipes/{recipe_id}/favorite")
@@ -207,6 +243,8 @@ def api_toggle_public(recipe_id: int, user_id: int = Depends(get_current_user_id
 
 @app.post("/api/recipes/{recipe_id}/cook")
 def api_cook_recipe(recipe_id: int, user_id: int = Depends(get_current_user_id)):
+    if not get_recipe(recipe_id, user_id):
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
     result = consume_ingredients_for_recipe(recipe_id, user_id)
     if not result.get("success"):
         logger.warning("Cocinar receta id=%s fallido (user=%s): ingredientes insuficientes", recipe_id, user_id)
@@ -234,10 +272,10 @@ def api_shopping_list(user_id: int = Depends(get_current_user_id)):
 def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_user_id)):
     name = str(payload.get("name", "")).strip()
     unit = str(payload.get("unit", "")).strip()
-    quantity = float(payload.get("quantity", 0))
-    threshold = float(payload.get("low_stock_threshold", 5))
+    quantity = _parse_qty(payload.get("quantity", 0))
+    threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit or quantity < 0:
+    if not name or not unit or len(name) > 100 or len(unit) > 20 or len(threshold_unit) > 20:
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = create_inventory_item(
         user_id=user_id, name=name, quantity=quantity, unit=unit,
@@ -250,10 +288,10 @@ def api_create_inventory_item(payload: dict, user_id: int = Depends(get_current_
 def api_update_inventory_item(item_id: int, payload: dict, user_id: int = Depends(get_current_user_id)):
     name = str(payload.get("name", "")).strip()
     unit = str(payload.get("unit", "")).strip()
-    quantity = float(payload.get("quantity", 0))
-    threshold = float(payload.get("low_stock_threshold", 5))
+    quantity = _parse_qty(payload.get("quantity", 0))
+    threshold = _parse_qty(payload.get("low_stock_threshold", 5))
     threshold_unit = str(payload.get("low_stock_unit", unit)).strip()
-    if not name or not unit or quantity < 0:
+    if not name or not unit or len(name) > 100 or len(unit) > 20 or len(threshold_unit) > 20:
         logger.warning("Datos de inventario no válidos — user=%s payload=%s", user_id, payload)
         raise HTTPException(status_code=400, detail="Datos de inventario no válidos")
     item = update_inventory_item(

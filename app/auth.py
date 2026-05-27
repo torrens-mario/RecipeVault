@@ -1,9 +1,9 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
 from passlib.context import CryptContext
 
 ALGORITHM = "HS256"
@@ -29,7 +29,7 @@ def hash_password(plain: str) -> str:
 
 
 def create_access_token(user_id: int) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     return jwt.encode({"sub": str(user_id), "exp": expire}, _secret(), algorithm=ALGORITHM)
 
 
@@ -40,5 +40,5 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(_bea
         if user_id is None:
             raise HTTPException(status_code=401, detail="Token inválido")
         return int(user_id)
-    except (JWTError, ValueError):
+    except (jwt.PyJWTError, ValueError):
         raise HTTPException(status_code=401, detail="Token inválido o expirado")

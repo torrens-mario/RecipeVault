@@ -47,3 +47,39 @@ def test_eliminar_receta(client, auth_headers, recipe):
     assert r.status_code == 204
     r2 = client.get(f"/api/recipes/{recipe['id']}", headers=auth_headers)
     assert r2.status_code == 404
+
+
+def test_obtener_receta_inexistente_devuelve_404(client, auth_headers):
+    r = client.get("/api/recipes/999999", headers=auth_headers)
+    assert r.status_code == 404
+
+
+def test_actualizar_receta_inexistente_devuelve_404(client, auth_headers):
+    r = client.put("/api/recipes/999999", headers=auth_headers, json={
+        "title": "No existe",
+        "description": "",
+        "category": "Test",
+        "servings": 2,
+        "ingredients": [],
+        "steps": [],
+        "tags": [],
+    })
+    assert r.status_code == 404
+
+
+def test_eliminar_receta_inexistente_devuelve_404(client, auth_headers):
+    r = client.delete("/api/recipes/999999", headers=auth_headers)
+    assert r.status_code == 404
+
+
+def test_editar_receta_no_resetea_favorito(client, auth_headers, recipe):
+    client.post(f"/api/recipes/{recipe['id']}/favorite", headers=auth_headers)
+
+    r = client.put(f"/api/recipes/{recipe['id']}", headers=auth_headers, json={
+        **recipe,
+        "title": "Título actualizado",
+    })
+    assert r.status_code == 200
+
+    r2 = client.get(f"/api/recipes/{recipe['id']}", headers=auth_headers)
+    assert r2.json()["favorite"] is True

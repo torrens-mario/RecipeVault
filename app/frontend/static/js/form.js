@@ -26,7 +26,17 @@ document.querySelectorAll('.star-btn').forEach(btn => {
 
 async function prefillForm() {
   if (!isEditing) return;
-  const r = await api.getRecipe(window.EDIT_RECIPE_ID);
+  let r;
+  try {
+    r = await api.getRecipe(window.EDIT_RECIPE_ID);
+  } catch {
+    showToast('No se ha podido cargar la receta para editar');
+    return;
+  }
+  if (!r) {
+    showToast('Receta no encontrada');
+    return;
+  }
   form.elements.title.value = r.title || '';
   form.elements.description.value = r.description || '';
   form.elements.category.value = r.category || 'General';
@@ -45,6 +55,11 @@ async function prefillForm() {
 
 form?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const submitBtn = form.querySelector('[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Guardando...';
+
   const fd = new FormData(form);
   const payload = {
     title: String(fd.get('title') || '').trim(),
@@ -64,18 +79,22 @@ form?.addEventListener('submit', async (e) => {
     }),
     steps: String(fd.get('steps') || '').split('\n').map(s => s.trim()).filter(Boolean),
     tags: String(fd.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean),
-    favorite: false,
-    image: ''
   };
 
-  if (isEditing) {
-    await api.updateRecipe(window.EDIT_RECIPE_ID, payload);
-    showToast('Receta actualizada correctamente');
-    window.location.href = `/recipes/${window.EDIT_RECIPE_ID}`;
-  } else {
-    const created = await api.createRecipe(payload);
-    showToast('Receta creada correctamente');
-    window.location.href = `/recipes/${created.id}`;
+  try {
+    if (isEditing) {
+      await api.updateRecipe(window.EDIT_RECIPE_ID, payload);
+      showToast('Receta actualizada correctamente');
+      window.location.href = `/recipes/${window.EDIT_RECIPE_ID}`;
+    } else {
+      const created = await api.createRecipe(payload);
+      showToast('Receta creada correctamente');
+      window.location.href = `/recipes/${created.id}`;
+    }
+  } catch {
+    showToast('Error al guardar la receta. Inténtalo de nuevo.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
   }
 });
 

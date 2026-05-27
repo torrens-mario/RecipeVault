@@ -19,12 +19,15 @@ const api = {
   async listRecipes(q = '') {
     const url = q ? `/api/recipes?q=${encodeURIComponent(q)}` : '/api/recipes';
     const res = await _fetch(url, { headers: _authHeaders() });
-    return res ? res.json() : [];
+    if (!res) return [];
+    if (!res.ok) throw new Error('Error al cargar las recetas');
+    return res.json();
   },
 
   async getRecipe(id) {
     const res = await _fetch(`/api/recipes/${id}`, { headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al cargar la receta');
+    return res.json();
   },
 
   async createRecipe(payload) {
@@ -33,7 +36,8 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al crear la receta');
+    return res.json();
   },
 
   async updateRecipe(id, payload) {
@@ -42,47 +46,43 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
-  },
-
-  async uploadRecipeImage(id, file) {
-    const form = new FormData();
-    form.append('file', file);
-    const res = await _fetch(`/api/recipes/${id}/image`, {
-      method: 'POST',
-      headers: _authHeaders(),
-      body: form
-    });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar la receta');
+    return res.json();
   },
 
   async toggleFavorite(id) {
     const res = await _fetch(`/api/recipes/${id}/favorite`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar favorito');
+    return res.json();
   },
 
   async togglePlan(id) {
     const res = await _fetch(`/api/recipes/${id}/plan`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar plan');
+    return res.json();
   },
 
   async deleteRecipe(id) {
-    return _fetch(`/api/recipes/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    const res = await _fetch(`/api/recipes/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    if (!res || !res.ok) throw new Error('Error al eliminar la receta');
   },
 
   async listInventory() {
     const res = await _fetch('/api/inventory', { headers: _authHeaders() });
-    return res ? res.json() : [];
+    if (!res || !res.ok) return [];
+    return res.json();
   },
 
   async lowStockItems() {
     const res = await _fetch('/api/inventory/low-stock', { headers: _authHeaders() });
-    return res ? res.json() : [];
+    if (!res || !res.ok) return [];
+    return res.json();
   },
 
   async shoppingList() {
     const res = await _fetch('/api/shopping-list', { headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) return null;
+    return res.json();
   },
 
   async createInventoryItem(payload) {
@@ -91,7 +91,8 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al crear el ingrediente');
+    return res.json();
   },
 
   async updateInventoryItem(id, payload) {
@@ -100,20 +101,25 @@ const api = {
       headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al actualizar el ingrediente');
+    return res.json();
   },
 
   async deleteInventoryItem(id) {
-    return _fetch(`/api/inventory/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    const res = await _fetch(`/api/inventory/${id}`, { method: 'DELETE', headers: _authHeaders() });
+    if (!res || !res.ok) throw new Error('Error al eliminar el ingrediente');
   },
 
   async cookRecipe(id) {
     const res = await _fetch(`/api/recipes/${id}/cook`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res) return null;
+    if (res.status === 404) throw new Error('Receta no encontrada');
+    return res.json();
   },
 
   async togglePublic(id) {
     const res = await _fetch(`/api/recipes/${id}/public`, { method: 'POST', headers: _authHeaders() });
-    return res ? res.json() : null;
+    if (!res || !res.ok) throw new Error('Error al cambiar visibilidad');
+    return res.json();
   }
 };

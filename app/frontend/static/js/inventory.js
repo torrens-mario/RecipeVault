@@ -47,14 +47,12 @@ function closeEditModal() {
 document.getElementById('closeEditModal')?.addEventListener('click', closeEditModal);
 document.getElementById('cancelEditModal')?.addEventListener('click', closeEditModal);
 editModal?.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); }
-});
 
 // ── Low stock panel ────────────────────────────────────────────────────────────
 
-async function renderLowStock() {
-  const list = await api.lowStockItems();
+let _lowStockIds = new Set();
+
+function renderLowStockItems(list) {
   let panel = document.getElementById('lowStockPanel');
   if (!panel) {
     panel = document.createElement('div');
@@ -74,7 +72,7 @@ async function renderLowStock() {
 // ── Render table ───────────────────────────────────────────────────────────────
 
 function isLow(item) {
-  return item.quantity <= (item.low_stock_threshold || 0);
+  return _lowStockIds.has(item.id);
 }
 
 function renderTable(items) {
@@ -114,10 +112,15 @@ function renderTable(items) {
 
 async function loadInventory() {
   if (!tbody) return;
-  const items = await api.listInventory();
-  window.__inventoryItems = items;
-  renderTable(items);
-  renderLowStock();
+  try {
+    const [items, lowStock] = await Promise.all([api.listInventory(), api.lowStockItems()]);
+    _lowStockIds = new Set(lowStock.map(i => i.id));
+    window.__inventoryItems = items;
+    renderTable(items);
+    renderLowStockItems(lowStock);
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#c9435b;">Error al cargar el inventario. Recarga la página.</td></tr>';
+  }
 }
 
 // ── Events ─────────────────────────────────────────────────────────────────────
@@ -126,6 +129,10 @@ invSearch?.addEventListener('input', () => renderTable(window.__inventoryItems |
 
 addForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const btn = addForm.querySelector('[type="submit"]');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Añadiendo...';
   const fd = new FormData(addForm);
   const payload = {
     name: fd.get('name'),
@@ -134,14 +141,25 @@ addForm?.addEventListener('submit', async (e) => {
     low_stock_threshold: Number(fd.get('low_stock_threshold') || 5),
     low_stock_unit: fd.get('low_stock_unit') || fd.get('unit'),
   };
-  await api.createInventoryItem(payload);
-  closeAddModal();
-  showToast('Ingrediente añadido');
-  loadInventory();
+  try {
+    await api.createInventoryItem(payload);
+    closeAddModal();
+    showToast('Ingrediente añadido');
+    loadInventory();
+  } catch {
+    showToast('Error al añadir el ingrediente. Inténtalo de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 
 editForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const btn = editForm.querySelector('[type="submit"]');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
   const fd = new FormData(editForm);
   const id = Number(fd.get('id'));
   const payload = {
@@ -151,23 +169,57 @@ editForm?.addEventListener('submit', async (e) => {
     low_stock_threshold: Number(fd.get('low_stock_threshold') || 5),
     low_stock_unit: fd.get('low_stock_unit') || fd.get('unit'),
   };
-  await api.updateInventoryItem(id, payload);
-  closeEditModal();
-  showToast('Ingrediente actualizado');
-  loadInventory();
+  try {
+    await api.updateInventoryItem(id, payload);
+    closeEditModal();
+    showToast('Ingrediente actualizado');
+    loadInventory();
+  } catch {
+    showToast('Error al actualizar el ingrediente. Inténtalo de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
+
+const deleteItemModal = document.getElementById('confirmDeleteItemModal');
+let _pendingDeleteId = null;
+
+function openConfirmDeleteItem(id) {
+  _pendingDeleteId = id;
+  deleteItemModal.classList.add('open');
+  deleteItemModal.setAttribute('aria-hidden', 'false');
+}
+function closeConfirmDeleteItem() {
+  _pendingDeleteId = null;
+  deleteItemModal.classList.remove('open');
+  deleteItemModal.setAttribute('aria-hidden', 'true');
+}
+
+document.getElementById('confirmDeleteItemClose')?.addEventListener('click', closeConfirmDeleteItem);
+document.getElementById('confirmDeleteItemCancel')?.addEventListener('click', closeConfirmDeleteItem);
+deleteItemModal?.addEventListener('click', (e) => { if (e.target === deleteItemModal) closeConfirmDeleteItem(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeConfirmDeleteItem(); }
+});
+
+document.getElementById('confirmDeleteItemOk')?.addEventListener('click', async () => {
+  const id = _pendingDeleteId;
+  closeConfirmDeleteItem();
+  try {
+    await api.deleteInventoryItem(id);
+    showToast('Ingrediente eliminado');
+    loadInventory();
+  } catch {
+    showToast('Error al eliminar el ingrediente');
+  }
 });
 
 tbody?.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
   const id = Number(btn.dataset.edit || btn.dataset.del);
-  if (btn.dataset.del) {
-    if (confirm('¿Borrar este ingrediente del inventario?')) {
-      await api.deleteInventoryItem(id);
-      showToast('Ingrediente eliminado');
-      loadInventory();
-    }
-  }
+  if (btn.dataset.del) openConfirmDeleteItem(id);
   if (btn.dataset.edit) {
     const item = (window.__inventoryItems || []).find(x => x.id === id);
     if (item) openEditModal(item);

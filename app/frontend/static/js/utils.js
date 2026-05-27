@@ -1,4 +1,6 @@
-// Shared utility functions
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 const ICONS = {
   huevos: '🥚', huevo: '🥚', patata: '🥔', patatas: '🥔',
@@ -23,7 +25,11 @@ const ICONS = {
 
 function iconForIngredient(name) {
   const key = String(name || '').toLowerCase();
-  return ICONS[key] || '🛒';
+  if (ICONS[key]) return ICONS[key];
+  for (const k of Object.keys(ICONS)) {
+    if (key.includes(k)) return ICONS[k];
+  }
+  return '🛒';
 }
 
 function showToast(message) {

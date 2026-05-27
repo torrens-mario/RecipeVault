@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro - RecipeVault</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽</text></svg>">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="app-body auth-body">
@@ -12,13 +13,13 @@
     <h1 class="auth-title">Crear cuenta</h1>
     <form id="registerForm" class="auth-form">
       <label>Nombre de usuario
-        <input type="text" id="username" required autocomplete="username" minlength="3">
+        <input type="text" id="username" required autocomplete="username" minlength="3" maxlength="50">
       </label>
       <label>Email
         <input type="email" id="email" required autocomplete="email">
       </label>
       <label>Contraseña
-        <input type="password" id="password" required autocomplete="new-password" minlength="6">
+        <input type="password" id="password" required autocomplete="new-password" minlength="8">
       </label>
       <p id="registerError" class="auth-error" style="display:none"></p>
       <button type="submit" class="btn primary full-width">Registrarme</button>

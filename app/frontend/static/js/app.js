@@ -2,6 +2,7 @@ const grid = document.getElementById('recipes');
 const search = document.getElementById('search');
 const sortSelect = document.getElementById('sortSelect');
 const filterCategory = document.getElementById('filterCategory');
+const filterDifficulty = document.getElementById('filterDifficulty');
 const filterFavs = document.getElementById('filterFavs');
 const filterPlan = document.getElementById('filterPlan');
 
@@ -19,9 +20,11 @@ function sortRecipes(items) {
 function applyFilters(items) {
   let result = items;
   const cat = filterCategory?.value || '';
+  const diff = filterDifficulty?.value || '';
   const onlyFavs = filterFavs?.dataset.active === 'true';
   const onlyPlan = filterPlan?.dataset.active === 'true';
   if (cat) result = result.filter(r => r.category === cat);
+  if (diff) result = result.filter(r => r.difficulty === diff);
   if (onlyFavs) result = result.filter(r => r.favorite);
   if (onlyPlan) result = result.filter(r => r.planned_to_cook);
   return result;
@@ -44,21 +47,21 @@ function renderRecipes(items) {
   }
   grid.innerHTML = sorted.map(r => `
     <article class="card recipe-card">
-      <img class="recipe-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
+      ${r.image ? `<img class="recipe-photo" src="${esc(r.image)}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">` : ''}
       <div class="recipe-card-body">
         <div class="recipe-card-head">
-          <h3>${r.title} ${r.is_public === false ? '<span class="private-badge" title="Receta privada">🔒</span>' : ''}</h3>
+          <h3>${esc(r.title)} ${r.is_public === false ? '<span class="private-badge" title="Receta privada">🔒</span>' : ''}</h3>
           <button class="favorite-btn ${r.favorite ? 'active' : ''}" data-favorite="${r.id}" aria-label="Marcar como favorita">❤</button>
         </div>
         <div class="recipe-card-meta">
-          <span class="muted">${r.category} · ${r.servings} raciones</span>
-          <span class="difficulty-badge difficulty-${r.difficulty === 'Fácil' ? 'facil' : r.difficulty === 'Difícil' ? 'dificil' : 'media'}">${r.difficulty || 'Media'}</span>
+          <span class="muted">${esc(r.category)} · ${r.servings} raciones</span>
+          <span class="difficulty-badge difficulty-${r.difficulty === 'Fácil' ? 'facil' : r.difficulty === 'Difícil' ? 'dificil' : 'media'}">${esc(r.difficulty || 'Media')}</span>
         </div>
         ${r.rating > 0 ? `<div class="star-row" style="margin-top:4px;">${renderStars(r.rating)}</div>` : ''}
         ${(r.prep_time > 0 || r.cook_time > 0) ? `<p class="muted time-info">${[r.prep_time > 0 ? '⏱ ' + r.prep_time + ' min' : '', r.cook_time > 0 ? '🍳 ' + r.cook_time + ' min' : ''].filter(Boolean).join(' · ')}</p>` : ''}
-        <p>${r.description || ''}</p>
+        <p>${esc(r.description || '')}</p>
         <div class="card-tags">
-          ${(r.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+          ${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}
           ${r.planned_to_cook ? '<span class="tag tag-plan">Quiero cocinarla</span>' : ''}
         </div>
         <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -76,13 +79,19 @@ function populateCategoryFilter(items) {
   const cats = [...new Set(items.map(r => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
   const current = filterCategory.value;
   filterCategory.innerHTML = '<option value="">Todas las categorías</option>' +
-    cats.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>${c}</option>`).join('');
+    cats.map(c => `<option value="${esc(c)}" ${c === current ? 'selected' : ''}>${esc(c)}</option>`).join('');
 }
 
 async function loadRecipes() {
   if (!grid) return;
   const q = search?.value.trim() || '';
-  const items = await api.listRecipes(q);
+  let items;
+  try {
+    items = await api.listRecipes(q);
+  } catch {
+    grid.innerHTML = '<p class="muted">Error al cargar las recetas. Comprueba tu conexión.</p>';
+    return;
+  }
   window.__recipes = items;
   populateCategoryFilter(items);
   renderRecipes(items);
@@ -102,14 +111,21 @@ search?.addEventListener('input', () => {
 
 sortSelect?.addEventListener('change', () => renderRecipes(window.__recipes || []));
 filterCategory?.addEventListener('change', () => renderRecipes(window.__recipes || []));
+filterDifficulty?.addEventListener('change', () => renderRecipes(window.__recipes || []));
 filterFavs?.addEventListener('click', () => toggleFilterBtn(filterFavs));
 filterPlan?.addEventListener('click', () => toggleFilterBtn(filterPlan));
 
 grid?.addEventListener('click', async (e) => {
   const fav = e.target.closest('[data-favorite]');
   const plan = e.target.closest('[data-plan]');
-  if (fav) { await api.toggleFavorite(Number(fav.dataset.favorite)); await loadRecipes(); }
-  if (plan) { await api.togglePlan(Number(plan.dataset.plan)); await loadRecipes(); }
+  if (fav) {
+    try { await api.toggleFavorite(Number(fav.dataset.favorite)); await loadRecipes(); }
+    catch { showToast('Error al actualizar favorito'); }
+  }
+  if (plan) {
+    try { await api.togglePlan(Number(plan.dataset.plan)); await loadRecipes(); }
+    catch { showToast('Error al actualizar plan'); }
+  }
 });
 
 loadRecipes();

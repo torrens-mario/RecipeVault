@@ -2,7 +2,17 @@
   const container = document.getElementById('detail');
   if (!container) return;
 
-  const r = await api.getRecipe(window.RECIPE_ID);
+  let r;
+  try {
+    r = await api.getRecipe(window.RECIPE_ID);
+  } catch {
+    container.innerHTML = '<p class="muted">No se ha podido cargar la receta. <a href="/">Volver al inicio</a></p>';
+    return;
+  }
+  if (!r) {
+    container.innerHTML = '<p class="muted">Receta no encontrada. <a href="/">Volver al inicio</a></p>';
+    return;
+  }
   const shareUrl = `${window.location.origin}/shared/${r.id}`;
 
   function renderStars(rating) {
@@ -23,24 +33,24 @@
 
   container.innerHTML = `
     <article class="card detail-card">
-      <img class="detail-photo" src="${r.image || ''}" alt="Imagen de ${r.title}" loading="lazy" width="1200" height="800">
-      <h1 style="font-size:1.5rem;margin-bottom:4px;">${r.title}</h1>
+      ${r.image ? `<img class="detail-photo" src="${esc(r.image)}" alt="Imagen de ${esc(r.title)}" loading="lazy" width="1200" height="800" onerror="this.onerror=null;this.style.display='none'">` : ''}
+      <h1 style="font-size:1.5rem;margin-bottom:4px;">${esc(r.title)}</h1>
       <div class="detail-meta">
-        <span class="muted">${r.category} · ${r.servings} raciones</span>
-        <span class="difficulty-badge difficulty-${difficultyClass(r.difficulty)}">${r.difficulty || 'Media'}</span>
+        <span class="muted">${esc(r.category)} · ${r.servings} raciones</span>
+        <span class="difficulty-badge difficulty-${difficultyClass(r.difficulty)}">${esc(r.difficulty || 'Media')}</span>
         ${r.rating > 0 ? `<span class="star-row">${renderStars(r.rating)}</span>` : ''}
       </div>
       ${timeInfo.length ? `<p class="time-info muted">${timeInfo.join(' · ')}</p>` : ''}
-      <p style="margin-top:8px;">${r.description || ''}</p>
+      <p style="margin-top:8px;">${esc(r.description || '')}</p>
       <h3 style="margin-top:14px;">Ingredientes</h3>
       <ul style="margin-left:18px;margin-top:6px;">
-        ${r.ingredients.map(i => `<li>${i.amount || ''} ${i.name}</li>`).join('')}
+        ${r.ingredients.map(i => `<li>${esc(i.amount || '')} ${esc(i.name)}</li>`).join('')}
       </ul>
       <h3 style="margin-top:14px;">Pasos</h3>
       <ol style="margin-left:18px;margin-top:6px;">
-        ${r.steps.map(s => `<li>${s}</li>`).join('')}
+        ${r.steps.map(s => `<li>${esc(s)}</li>`).join('')}
       </ol>
-      ${r.notes ? `<h3 style="margin-top:14px;">Notas</h3><p style="margin-top:6px;font-style:italic;color:#7a5a46;">${r.notes}</p>` : ''}
+      ${r.notes ? `<h3 style="margin-top:14px;">Notas</h3><p style="margin-top:6px;font-style:italic;color:#7a5a46;">${esc(r.notes)}</p>` : ''}
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn primary" id="cookBtn">Cocinar (actualizar inventario)</button>
         <button class="btn secondary" id="favoriteBtn">${r.favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}</button>
@@ -49,6 +59,10 @@
         </button>
         <button class="btn secondary" id="publicBtn">${r.is_public ? '🔓 Hacer privada' : '🔒 Hacer pública'}</button>
         ${r.is_public ? `<button class="btn secondary" id="shareBtn">Copiar enlace</button>` : ''}
+        <label class="btn secondary" id="imageUploadLabel" style="cursor:pointer;">
+          📷 Cambiar imagen
+          <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        </label>
         <a class="btn secondary" href="/recipes/${r.id}/edit">Editar receta</a>
         <button class="btn secondary" id="deleteBtn" style="color:#c9435b;border-color:#f2bbc4;">Eliminar receta</button>
       </div>
@@ -61,30 +75,108 @@
       await navigator.clipboard.writeText(shareUrl);
       showToast('Enlace copiado al portapapeles');
     } catch (e) {
-      alert('No se pudo copiar el enlace. URL: ' + shareUrl);
+      showToast('No se pudo copiar el enlace: ' + shareUrl);
     }
   });
 
   document.getElementById('publicBtn')?.addEventListener('click', async () => {
-    await api.togglePublic(r.id);
-    location.reload();
+    try { await api.togglePublic(r.id); location.reload(); }
+    catch { showToast('Error al cambiar visibilidad'); }
   });
 
   document.getElementById('favoriteBtn')?.addEventListener('click', async () => {
-    await api.toggleFavorite(r.id);
-    location.reload();
+    try { await api.toggleFavorite(r.id); location.reload(); }
+    catch { showToast('Error al actualizar favorito'); }
   });
 
   document.getElementById('planBtn')?.addEventListener('click', async () => {
-    await api.togglePlan(r.id);
-    location.reload();
+    try { await api.togglePlan(r.id); location.reload(); }
+    catch { showToast('Error al actualizar plan'); }
   });
 
-  document.getElementById('deleteBtn')?.addEventListener('click', async () => {
-    if (confirm('¿Seguro que quieres eliminar esta receta? Esta acción no se puede deshacer.')) {
+  document.getElementById('imageInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      showToast('Solo se permiten imágenes JPEG, PNG o WebP');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('La imagen es demasiado grande (máximo 5 MB)');
+      e.target.value = '';
+      return;
+    }
+
+    const label = document.getElementById('imageUploadLabel');
+    label.style.pointerEvents = 'none';
+    label.style.opacity = '0.6';
+    label.childNodes[0].textContent = ' Subiendo...';
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/recipes/${window.RECIPE_ID}/image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.detail || 'Error al subir la imagen');
+        return;
+      }
+      const data = await res.json();
+      let photo = document.querySelector('.detail-photo');
+      if (!photo) {
+        photo = document.createElement('img');
+        photo.className = 'detail-photo';
+        photo.loading = 'lazy';
+        photo.width = 1200;
+        photo.height = 800;
+        photo.onerror = () => { photo.onerror = null; photo.style.display = 'none'; };
+        document.querySelector('.detail-card').prepend(photo);
+      }
+      photo.style.display = '';
+      photo.src = data.image_url;
+      showToast('Imagen actualizada');
+    } catch {
+      showToast('Error de red al subir la imagen');
+    } finally {
+      label.style.pointerEvents = '';
+      label.style.opacity = '';
+      label.childNodes[0].textContent = ' 📷 Cambiar imagen';
+      e.target.value = '';
+    }
+  });
+
+  const confirmModal = document.getElementById('confirmDeleteModal');
+  function openConfirmDelete() {
+    confirmModal.classList.add('open');
+    confirmModal.setAttribute('aria-hidden', 'false');
+  }
+  function closeConfirmDelete() {
+    confirmModal.classList.remove('open');
+    confirmModal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.getElementById('deleteBtn')?.addEventListener('click', openConfirmDelete);
+  document.getElementById('confirmDeleteClose')?.addEventListener('click', closeConfirmDelete);
+  document.getElementById('confirmDeleteCancel')?.addEventListener('click', closeConfirmDelete);
+  confirmModal?.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirmDelete(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConfirmDelete(); });
+
+  document.getElementById('confirmDeleteOk')?.addEventListener('click', async () => {
+    closeConfirmDelete();
+    try {
       await api.deleteRecipe(r.id);
       showToast('Receta eliminada');
       window.location.href = '/';
+    } catch {
+      showToast('Error al eliminar la receta');
     }
   });
 })();

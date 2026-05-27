@@ -1,33 +1,16 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Receta - RecipeVault</title>
-  <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body class="app-body">
-  <header class="topbar">
-    <div class="logo">RecipeVault</div>
-    <nav class="nav-links">
-      <a href="/">🍽 <span>Mis recetas</span></a>
-      <a href="/inventory">🥫 <span>Inventario</span></a>
-      <a href="/shopping-list">🛒 <span>Lista de la compra</span><span id="shoppingBadge" class="nav-badge" style="display:none">0</span></a>
-      <a href="/recipes/new" class="active">＋ <span>Nueva receta</span></a>
-      <a href="#" onclick="logout();return false;" class="nav-logout">👤 <span id="navUser"></span></a>
-    </nav>
-  </header>
-  <main class="container">
+{% extends "base.html" %}
+{% block title %}Receta - RecipeVault{% endblock %}
+{% block content %}
     <section class="page-hero compact">
       <h1 id="formTitle">＋ <span>Nueva receta</span></h1>
       <p class="muted">Rellena los campos para guardar tu receta.</p>
     </section>
     <form id="recipeForm" class="form card form-card">
-      <input name="title" placeholder="Título" required>
-      <textarea name="description" placeholder="Descripción"></textarea>
-      <input name="category" placeholder="Categoría" value="General">
+      <input name="title" placeholder="Título" maxlength="200" required>
+      <textarea name="description" placeholder="Descripción" maxlength="5000"></textarea>
+      <input name="category" placeholder="Categoría" value="General" maxlength="50">
       <div class="form-row-2">
-        <input name="servings" type="number" value="2" min="1" max="20" placeholder="Raciones">
+        <input name="servings" type="number" value="2" min="1" max="100" placeholder="Raciones">
         <select name="difficulty">
           <option value="Fácil">Fácil</option>
           <option value="Media" selected>Media</option>
@@ -35,8 +18,8 @@
         </select>
       </div>
       <div class="form-row-2">
-        <input name="prep_time" type="number" min="0" placeholder="Preparación (min)">
-        <input name="cook_time" type="number" min="0" placeholder="Cocción (min)">
+        <input name="prep_time" type="number" min="0" max="1440" placeholder="Preparación (min)">
+        <input name="cook_time" type="number" min="0" max="1440" placeholder="Cocción (min)">
       </div>
       <div class="form-field">
         <label class="form-label">Valoración</label>
@@ -49,16 +32,14 @@
         </div>
         <input type="hidden" name="rating" id="ratingHidden" value="0">
       </div>
-      <textarea name="ingredients" placeholder="Ingredientes, uno por línea. Ej: 4 uds Huevos o 3 cda Pesto"></textarea>
-      <textarea name="steps" placeholder="Pasos, uno por línea"></textarea>
-      <input name="tags" placeholder="Tags separadas por coma">
-      <textarea name="notes" placeholder="Notas personales (trucos, variaciones, recuerdos...)"></textarea>
+      <textarea name="ingredients" maxlength="10000" placeholder="Ingredientes, uno por línea. Ej: 4 uds Huevos o 3 cda Pesto"></textarea>
+      <textarea name="steps" maxlength="20000" placeholder="Pasos, uno por línea"></textarea>
+      <input name="tags" maxlength="2500" placeholder="Tags separadas por coma">
+      <textarea name="notes" maxlength="5000" placeholder="Notas personales (trucos, variaciones, recuerdos...)"></textarea>
       <button type="submit" class="btn primary" id="submitBtn">Guardar receta</button>
     </form>
-  </main>
-  <script src="/static/js/auth.js"></script>
-  <script src="/static/js/api.js"></script>
-  <script src="/static/js/utils.js"></script>
+{% endblock %}
+{% block scripts %}
   {% if edit_recipe_id is defined %}
   <script>
     window.EDIT_RECIPE_ID = {{ edit_recipe_id }};
@@ -67,6 +48,4 @@
   </script>
   {% endif %}
   <script src="/static/js/form.js"></script>
-  <script src="/static/js/nav-badge.js"></script>
-</body>
-</html>
+{% endblock %}

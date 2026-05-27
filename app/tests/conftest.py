@@ -13,6 +13,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./test_recipevault.db")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-testing")
 os.environ.setdefault("BLOB_ACCOUNT_URL", "https://test.blob.core.windows.net")
 os.environ.setdefault("BLOB_CONTAINER", "test-container")
+os.environ["RATELIMIT_ENABLED"] = "false"
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -78,7 +79,7 @@ def auth_headers(new_user):
 @pytest.fixture
 def inventory_item(client, auth_headers):
     r = client.post("/api/inventory", headers=auth_headers, json={
-        "name": "Harina",
+        "name": "Aceite de coco",
         "quantity": 500,
         "unit": "g",
         "low_stock_threshold": 100,
