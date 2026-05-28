@@ -4,18 +4,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  infrastructure:
+    name: 1 · Terraform Apply
+    uses: ./.github/workflows/infrastructure.yml
+    secrets: inherit
+    with:
+      action: apply
+
   tests:
-    name: 1 · Tests
+    name: 2 · Tests
+    needs: infrastructure
     uses: ./.github/workflows/tests.yml
 
   deploy-backend:
-    name: 2 · Deploy Backend
+    name: 3 · Deploy Backend
     needs: tests
     uses: ./.github/workflows/deploy-backend.yml
     secrets: inherit
 
   deploy-frontend:
-    name: 3 · Deploy Frontend
+    name: 4 · Deploy Frontend
     needs: deploy-backend
     uses: ./.github/workflows/deploy-frontend.yml
     secrets: inherit
