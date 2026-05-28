@@ -13,6 +13,7 @@ Aplicación web de gestión de recetas de cocina desarrollada como proyecto de l
 - [Variables de entorno](#variables-de-entorno)
 - [Ejecución en local](#ejecución-en-local)
 - [Tests](#tests)
+- [Seguridad del código fuente](#seguridad-del-código-fuente)
 - [Despliegue desde cero](#despliegue-desde-cero)
 - [Seguridad](#seguridad)
 - [Logs y monitorización](#logs-y-monitorización)
@@ -226,6 +227,35 @@ pytest tests/ -v --cov=. --cov-report=term-missing
 | `test_image_validation.py` | Magic bytes, tamaño máximo (5 MB), JPEG/PNG/WebP válidos re-codificados a JPEG, archivos corruptos |
 
 El workflow de GitHub Actions ejecuta los tests automáticamente en cada push a `main` o `mario-dev` y en cada PR hacia `main`.
+
+### Hook pre-commit
+
+El repositorio incluye un hook que ejecuta los tests automáticamente antes de cada `git commit`. Si algún test falla, el commit se cancela.
+
+Para activarlo (solo una vez por máquina, después de clonar el repo):
+
+```bash
+cd app
+pip install -r requirements-test.txt
+cd ..
+pre-commit install
+```
+
+A partir de ahí el hook se ejecuta solo en cada `git commit`. Para saltarlo puntualmente (no recomendado):
+
+```bash
+git commit --no-verify -m "mensaje"
+```
+
+---
+
+## Seguridad del código fuente
+
+### Secret scan
+
+El workflow `.github/workflows/secret-scan.yml` ejecuta **Gitleaks** en cada push y PR para detectar secretos (tokens, contraseñas, claves API) accidentalmente incluidos en el código. Si detecta alguno, el workflow falla y bloquea el merge.
+
+El escaneo analiza todo el historial de commits (`fetch-depth: 0`), no solo el último push.
 
 ---
 
