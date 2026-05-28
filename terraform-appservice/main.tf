@@ -26,8 +26,8 @@ locals {
   db_url = "postgresql://${var.db_admin_username}:${random_password.db_password.result}@${azurerm_postgresql_flexible_server.main.fqdn}/${var.db_name}?sslmode=require"
 
   default_app_settings = {
-    SCM_DO_BUILD_DURING_DEPLOYMENT        = "true"
-    ENABLE_ORYX_BUILD                     = "true"
+    SCM_DO_BUILD_DURING_DEPLOYMENT        = "false"
+    ENABLE_ORYX_BUILD                     = "false"
     WEBSITES_PORT                         = "8000"
     PYTHONUNBUFFERED                      = "1"
     AZURE_CLIENT_ID                       = azurerm_user_assigned_identity.app.client_id
