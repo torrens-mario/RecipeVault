@@ -44,12 +44,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias en antenv
+      - name: Instalar dependencias portables
         run: |
-          cd app
-          python -m venv antenv
-          antenv/bin/pip install --upgrade pip --quiet
-          antenv/bin/pip install -r requirements.txt --quiet
+          pip install -r app/requirements.txt \
+            --target app/.python_packages/lib/python3.11/site-packages \
+            --quiet
 
       - name: Crear ZIP del backend
         run: |
@@ -58,8 +57,23 @@ jobs:
             --exclude "*.pyc" \
             --exclude "__pycache__/*" \
             --exclude "venv/*" \
+            --exclude "antenv/*" \
             --exclude ".env*" \
             --exclude "tests/*"
+
+      - name: Configurar App Service
+        run: |
+          az webapp config appsettings set \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.APP_SERVICE_NAME }} \
+            --settings \
+              SCM_DO_BUILD_DURING_DEPLOYMENT=false \
+              ENABLE_ORYX_BUILD=false \
+              PYTHONPATH=/home/site/wwwroot/.python_packages/lib/python3.11/site-packages
+          az webapp config set \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.APP_SERVICE_NAME }} \
+            --startup-file "python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 app:app --timeout 600"
 
       - name: Desplegar a App Service
         run: |

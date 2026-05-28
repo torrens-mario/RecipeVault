@@ -42,12 +42,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias en antenv
+      - name: Instalar dependencias portables
         run: |
-          cd app
-          python -m venv antenv
-          antenv/bin/pip install --upgrade pip --quiet
-          antenv/bin/pip install -r requirements.txt --quiet
+          pip install -r app/requirements.txt \
+            --target app/.python_packages/lib/python3.11/site-packages \
+            --quiet
 
       - name: Crear ZIP con el frontend
         run: |
@@ -56,6 +55,7 @@ jobs:
             --exclude "*.pyc" \
             --exclude "__pycache__/*" \
             --exclude "venv/*" \
+            --exclude "antenv/*" \
             --exclude ".env*" \
             --exclude "tests/*"
 

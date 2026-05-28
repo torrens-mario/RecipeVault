@@ -61,7 +61,7 @@ variable "python_version" {
 variable "startup_command" {
   description = "Comando de arranque de FastAPI."
   type        = string
-  default     = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 app:app --timeout 600"
+  default     = "python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 app:app --timeout 600"
 }
 
 variable "app_settings" {
