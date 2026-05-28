@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Tests
+        entry: bash -c 'cd app && pytest tests/ -q --tb=short'
+        language: system
+        pass_filenames: false
+        always_run: true
