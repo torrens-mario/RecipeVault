@@ -1,0 +1,21 @@
+name: Full Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: 1 · Tests
+    uses: ./.github/workflows/tests.yml
+
+  deploy-backend:
+    name: 2 · Deploy Backend
+    needs: tests
+    uses: ./.github/workflows/deploy-backend.yml
+    secrets: inherit
+
+  deploy-frontend:
+    name: 3 · Deploy Frontend
+    needs: deploy-backend
+    uses: ./.github/workflows/deploy-frontend.yml
+    secrets: inherit

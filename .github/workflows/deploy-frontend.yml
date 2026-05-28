@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/frontend/**'
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   id-token: write
