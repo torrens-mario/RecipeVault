@@ -3,6 +3,11 @@ name: Full Deploy
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
 jobs:
   infrastructure:
     name: 1 · Terraform Apply
