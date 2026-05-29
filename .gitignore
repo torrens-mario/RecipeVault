@@ -23,6 +23,10 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.pytest_cache/
+
+# Logs descargados
+*.zip
 
 # VS Code
 .vscode/

@@ -2,6 +2,8 @@
 
 Aplicación web de gestión de recetas de cocina desarrollada como proyecto de la asignatura de **Seguridad en la Nube**. Permite guardar recetas personales, gestionar el inventario de ingredientes, generar listas de la compra automáticas y compartir recetas públicamente.
 
+**Demo:** https://recipevault-api-dev.azurewebsites.net
+
 ---
 
 ## Tabla de contenidos
