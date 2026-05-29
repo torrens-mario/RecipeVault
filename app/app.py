@@ -192,7 +192,9 @@ def api_update_recipe(recipe_id: int, payload: RecipeUpdate, user_id: int = Depe
     return recipe.model_dump()
 
 @app.post("/api/recipes/{recipe_id}/image")
+@limiter.limit("10/minute")
 async def api_upload_recipe_image(
+    request: Request,
     recipe_id: int,
     file: UploadFile = File(...),
     user_id: int = Depends(get_current_user_id),
