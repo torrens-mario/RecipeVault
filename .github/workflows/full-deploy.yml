@@ -22,13 +22,7 @@ jobs:
     uses: ./.github/workflows/tests.yml
 
   deploy-backend:
-    name: 3 · Deploy Backend
+    name: 3 · Deploy
     needs: tests
     uses: ./.github/workflows/deploy-backend.yml
-    secrets: inherit
-
-  deploy-frontend:
-    name: 4 · Deploy Frontend
-    needs: deploy-backend
-    uses: ./.github/workflows/deploy-frontend.yml
     secrets: inherit
